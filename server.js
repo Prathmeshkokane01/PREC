@@ -68,10 +68,11 @@ app.get('/api/students/:division', async (req, res) => {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         
-        const attendanceRes = await client.query(
-            'SELECT student_roll_no, date, status FROM attendance_records WHERE division = $1 AND date >= $2',
-            [division, sevenDaysAgo]
-        );
+    // THIS IS THE CORRECTED LINE
+const attendanceRes = await client.query(
+    'SELECT student_roll_no, date, status FROM attendance_records WHERE division = $1 AND date >= $2',
+    [division, sevenDaysAgo]
+);
 
         // Process data for easy frontend use
         const attendanceMap = {};
