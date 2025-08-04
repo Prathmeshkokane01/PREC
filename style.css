@@ -1,0 +1,193 @@
+:root {
+    --primary-color: #003366;
+    --secondary-color: #f4f4f4;
+    --border-color: #ddd;
+    --shadow-color: rgba(0,0,0,0.1);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--secondary-color);
+    margin: 0;
+    color: #333;
+}
+
+header {
+    background-color: var(--primary-color);
+    color: white;
+    text-align: center;
+    padding: 1.5rem;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    background-color: #fff;
+    border-bottom: 2px solid var(--border-color);
+    padding: 0.5rem;
+}
+
+.nav-button {
+    background: none;
+    border: 2px solid transparent;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-button:hover {
+    background-color: var(--secondary-color);
+}
+
+.nav-button.active {
+    border-bottom: 2px solid var(--primary-color);
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+main {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+section {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.hidden {
+    display: none;
+}
+
+h2, h3 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+/* Form Styles */
+form {
+    display: grid;
+    gap: 1rem;
+}
+
+label {
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+button {
+    padding: 0.8rem 1.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0055a5;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 0.8rem;
+    text-align: left;
+}
+
+th {
+    background-color: var(--secondary-color);
+}
+
+td.absent {
+    background-color: #ffdddd;
+    color: #d8000c;
+    font-weight: bold;
+    text-align: center;
+}
+
+td.present {
+    text-align: center;
+    color: #4f8a10;
+}
+
+.fine {
+    font-weight: bold;
+    color: #d8000c;
+}
+
+/* Login and Filter Styles */
+#teacher-login-view, #hod-login-view {
+    max-width: 400px;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+#teacher-login-view input, #hod-login-view input {
+    margin-bottom: 1rem;
+}
+
+.div-selector, .filters {
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+#hod-download-pdf {
+    margin-left: auto;
+    background-color: #28a745;
+}
+#hod-download-pdf:hover {
+    background-color: #218838;
+}
+
+/* Message Popup */
+#message-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 5px;
+    color: white;
+    display: none;
+    z-index: 1000;
+}
+#message-container.success {
+    background-color: #28a745;
+}
+#message-container.error {
+    background-color: #d8000c;
+}
