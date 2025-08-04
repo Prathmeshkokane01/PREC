@@ -12,6 +12,13 @@
     --text-light-color: #6c757d; /* A lighter grey for subtitles */
     --accent-color-success: #28a745;
     --accent-color-danger: #dc3545;
+        --primary-color: #0D47A1; 
+        --primary-hover: #0B3A82;
+        --college-red: #B71C1C; /* <-- ADD THIS LINE */
+        --header-bg: #1565C0;
+        --bg-color: #F5F7FA;
+        /* ... rest of your variables ... */
+    
 }
 
 * {
@@ -49,27 +56,6 @@ header p {
     margin-top: 0.5rem;
 }
 
-/* 3. Navigation Bar */
-nav {
-    display: flex;
-    justify-content: center;
-    background-color: var(--surface-color);
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.nav-button {
-    background: none;
-    border: none;
-    border-bottom: 4px solid transparent;
-    padding: 1rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: var(--text-light-color);
-    margin-top: -4px; /* Align with bottom border */
-}
 
 .nav-button:hover {
     color: var(--primary-color);
@@ -248,50 +234,103 @@ td.present {
         padding: 1.5rem;
     }
 }
-/* --- NEW HEADER STYLES WITH LOGO --- */
+/* --- NEW OFFICIAL HEADER STYLES (White & Red) --- */
 
 header {
-    background-color: var(--header-bg);
-    color: white;
+    background-color: var(--surface-color); /* White Background */
     padding: 1rem;
-    border-bottom: 5px solid var(--primary-color);
+    border-bottom: 1px solid var(--border-color); /* Lighter border */
     width: 100%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Subtle shadow for depth */
 }
 
 .header-container {
     display: flex;
-    align-items: center; /* Vertically aligns logo and text */
-    justify-content: center; /* Centers the whole block */
+    align-items: center;
+    justify-content: center;
     max-width: 1200px;
-    margin: 0 auto; /* Centers the container on the page */
-    gap: 25px; /* Creates space between the logo and the text */
+    margin: 0 auto;
+    gap: 25px;
 }
 
 .college-logo {
-    height: 85px; /* You can change this value to make the logo bigger or smaller */
-    width: auto; /* Maintain aspect ratio */
-    flex-shrink: 0; /* Prevents the logo from shrinking if the window is too small */
+    height: 80px; 
+    width: auto;
+    flex-shrink: 0;
 }
 
 .header-text {
-    text-align: left; /* Aligns text to the left, right next to the logo */
+    text-align: left;
 }
 
-/* Overriding previous h1 styles specifically for the header */
 header h1 {
-    font-size: 2.2rem; /* Adjust as needed */
+    font-size: 2.2rem;
     margin: 0;
     padding: 0;
-    border: none; /* Removes any bottom border from the general h1 style */
+    border: none;
     line-height: 1.2;
+    color: var(--college-red); /* Red Font Color */
+    font-weight: 700;
 }
 
-/* Overriding previous p styles specifically for the header */
 header p {
     font-size: 1.1rem;
     margin: 0.25rem 0 0 0;
     padding: 0;
-    opacity: 0.9;
+    opacity: 1;
+    color: var(--text-color); /* Subtitle in dark grey */
+}
+
+/* New Navigation Style for White Header */
+nav {
+    display: flex;
+    justify-content: center;
+    background-color: #F8F9FA; /* A very light grey to separate from header */
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nav-button {
+    background: none;
+    border: none;
+    border-bottom: 4px solid transparent;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-light-color);
+    margin-top: -1px; /* Align with bottom border */
+}
+
+.nav-button:hover {
+    color: var(--college-red);
+}
+
+.nav-button.active {
+    border-bottom: 4px solid var(--college-red);
+    color: var(--college-red);
+}
+
+
+/* Responsive styles for the new header */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .header-text {
+        text-align: center;
+    }
+
+    header h1 {
+        font-size: 1.4rem; /* Adjusted for mobile */
+    }
+
+    header p {
+        font-size: 0.9rem;
+    }
 }
 
 
