@@ -10,15 +10,13 @@ const PORT = process.env.PORT || 3000;
 const FINE_PER_ABSENCE = 100;
 
 // --- PRE-DEFINED ACCESS CODES & EMAILS (as requested) ---
-// IMPORTANT: In a real application, store these securely in a database, not in code.
 const TEACHER_CREDENTIALS = [
-    { email: 'teacher1@pravara.edu', accessCode: 'pass123' },
+    { email: 'prathmeshkokane2511@gmail.com', accessCode: '1230' },
     { email: 'teacher2@pravara.edu', accessCode: 'pass456' }
 ];
-const HOD_ACCESS_CODE = 'hod_secret_code';
+const HOD_ACCESS_CODE = 'hod123';
 
 // --- DATABASE CONNECTION ---
-// The DATABASE_URL will come from your Neon project settings
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
@@ -27,9 +25,9 @@ const pool = new Pool({
 });
 
 // --- MIDDLEWARE ---
-app.use(cors()); // Allows requests from your frontend
-app.use(express.json()); // Parses incoming JSON requests
-app.use(express.static('.')); // Serve static files like index.html, style.css
+app.use(cors());
+app.use(express.json());
+app.use(express.static('.'));
 
 
 // --- API ENDPOINTS (ROUTES) ---
@@ -60,21 +58,18 @@ app.get('/api/students/:division', async (req, res) => {
     const { division } = req.params;
     const client = await pool.connect();
     try {
-        // Get list of students in the division
         const studentRes = await client.query('SELECT roll_no, name FROM students WHERE division = $1 ORDER BY roll_no', [division]);
         const students = studentRes.rows;
 
-        // Get attendance for the last 7 days for these students
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         
-    // THIS IS THE CORRECTED LINE
-const attendanceRes = await client.query(
-    'SELECT student_roll_no, date, status FROM attendance_records WHERE division = $1 AND date >= $2',
-    [division, sevenDaysAgo]
-);
+        // THIS IS THE VERIFIED CORRECT QUERY
+        const attendanceRes = await client.query(
+            'SELECT student_roll_no, date, status FROM attendance_records WHERE division = $1 AND date >= $2',
+            [division, sevenDaysAgo]
+        );
 
-        // Process data for easy frontend use
         const attendanceMap = {};
         attendanceRes.rows.forEach(row => {
             if (!attendanceMap[row.student_roll_no]) {
@@ -87,7 +82,6 @@ const attendanceRes = await client.query(
             student.attendance = attendanceMap[student.roll_no] || {};
         });
 
-        // Generate date range for the table header
         const dates = [];
         for (let i = 0; i < 7; i++) {
             const d = new Date();
@@ -112,9 +106,8 @@ app.post('/api/attendance', async (req, res) => {
     const { date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos } = req.body;
     const client = await pool.connect();
     try {
-        await client.query('BEGIN'); // Start transaction
+        await client.query('BEGIN');
 
-        // Insert the main lecture record
         const lectureInsertQuery = `
             INSERT INTO lectures (date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;
@@ -122,7 +115,6 @@ app.post('/api/attendance', async (req, res) => {
         const lectureRes = await client.query(lectureInsertQuery, [date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos]);
         const lectureId = lectureRes.rows[0].id;
         
-        // Mark students as absent
         for (const roll_no of absent_roll_nos) {
             const absentInsertQuery = `
                 INSERT INTO attendance_records (lecture_id, student_roll_no, division, date, status)
@@ -131,10 +123,10 @@ app.post('/api/attendance', async (req, res) => {
             await client.query(absentInsertQuery, [lectureId, parseInt(roll_no), division, date]);
         }
 
-        await client.query('COMMIT'); // Commit transaction
+        await client.query('COMMIT');
         res.status(201).json({ message: 'Attendance submitted successfully!' });
     } catch (error) {
-        await client.query('ROLLBACK'); // Rollback on error
+        await client.query('ROLLBACK');
         console.error('Error submitting attendance:', error);
         res.status(500).json({ message: 'Failed to submit attendance. Check if roll numbers are valid.' });
     } finally {
@@ -181,7 +173,6 @@ app.post('/api/attendance/remove', async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        // Find the lecture ID
         const lectureRes = await client.query(
             'SELECT id FROM lectures WHERE date = $1 AND time_slot = $2 AND division = $3',
             [date, time_slot, division]
@@ -192,13 +183,11 @@ app.post('/api/attendance/remove', async (req, res) => {
         }
         const lectureId = lectureRes.rows[0].id;
 
-        // Delete the specific absence record
         const deleteRes = await client.query(
             'DELETE FROM attendance_records WHERE lecture_id = $1 AND student_roll_no = $2',
             [lectureId, roll_no]
         );
         
-        // Remove the roll number from the `absent_roll_nos` array in the `lectures` table
         await client.query(
             `UPDATE lectures SET absent_roll_nos = array_remove(absent_roll_nos, $1) WHERE id = $2`,
             [roll_no, lectureId]
