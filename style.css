@@ -1,72 +1,100 @@
+/* --- MODERN STYLES V2 --- */
+
+/* 1. Root Variables & Global Styles */
 :root {
-    --primary-color: #003366;
-    --secondary-color: #f4f4f4;
-    --border-color: #ddd;
-    --shadow-color: rgba(0,0,0,0.1);
+    --primary-color: #6a11cb;
+    --secondary-color: #2575fc;
+    --bg-color: #f8f9fa;
+    --surface-color: #ffffff;
+    --text-color: #495057;
+    --text-light-color: #6c757d;
+    --border-color: #e9ecef;
+    --accent-color-success: #28a745;
+    --accent-color-danger: #dc3545;
+    --shadow-color: rgba(0, 0, 0, 0.08);
+    --primary-gradient: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--secondary-color);
-    margin: 0;
-    color: #333;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
 }
 
+/* 2. Header */
 header {
-    background-color: var(--primary-color);
+    background: var(--primary-gradient);
     color: white;
     text-align: center;
-    padding: 1.5rem;
+    padding: 2rem 1rem;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
 }
 
 header h1 {
-    margin: 0;
-    font-size: 2rem;
+    font-weight: 700;
+    font-size: 2.2rem;
+    margin-bottom: 0.25rem;
 }
 
+header p {
+    font-weight: 400;
+    opacity: 0.9;
+}
+
+/* 3. Navigation Tabs */
 nav {
     display: flex;
     justify-content: center;
-    background-color: #fff;
-    border-bottom: 2px solid var(--border-color);
-    padding: 0.5rem;
+    padding: 1rem;
+    margin-top: -20px; /* Pulls the tabs up slightly */
+    position: relative;
+    z-index: 10;
 }
-/* ADD THESE NEW, IMPROVED RULES */
+
 .nav-button {
-    background-color: #e9ecef; /* Light grey background for inactive buttons */
-    color: #495057; /* Darker text color */
-    border: 1px solid #dee2e6;
-    border-radius: 5px; /* Rounded corners */
-    padding: 0.8rem 1.5rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin: 0 5px; /* Adds space between buttons */
+    margin: 0 5px;
+    border-radius: 50px; /* Pill shape */
+    box-shadow: 0 4px 6px var(--shadow-color);
 }
 
 .nav-button:hover {
-    background-color: #ced4da; /* A darker grey on hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px var(--shadow-color);
 }
 
 .nav-button.active {
-    background-color: var(--primary-color); /* The main blue color */
-    color: white; /* White text when selected */
-    border-color: var(--primary-color);
-    font-weight: bold;
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
 }
 
+/* 4. Main Content Area & Cards */
 main {
-    padding: 2rem;
-    max-width: 900px;
+    padding: 2rem 1rem;
+    max-width: 950px;
     margin: 0 auto;
 }
 
 section {
-    background: white;
+    background: var(--surface-color);
     padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px var(--shadow-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px var(--shadow-color);
 }
 
 .hidden {
@@ -75,19 +103,21 @@ section {
 
 h2, h3 {
     color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
     border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.5rem;
-    margin-top: 0;
+    padding-bottom: 0.75rem;
 }
 
-/* Form Styles */
+/* 5. Forms & Inputs */
 form {
     display: grid;
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
 label {
-    font-weight: bold;
+    font-weight: 600;
+    margin-bottom: -5px;
 }
 
 input[type="text"],
@@ -97,102 +127,133 @@ input[type="number"],
 input[type="date"],
 select {
     width: 100%;
-    padding: 0.8rem;
+    padding: 0.8rem 1rem;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    box-sizing: border-box;
+    border-radius: 8px;
     font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.2);
 }
 
 button {
     padding: 0.8rem 1.5rem;
-    background-color: var(--primary-color);
+    background: var(--primary-gradient);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    justify-self: start; /* Align button to the start of the grid cell */
 }
 
 button:hover {
-    background-color: #0055a5;
+    transform: scale(1.03);
+    box-shadow: 0 4px 15px rgba(106, 17, 203, 0.4);
 }
 
-/* Table Styles */
+#hod-download-pdf {
+    background: var(--accent-color-success);
+    margin-left: auto;
+    justify-self: end;
+}
+#hod-download-pdf:hover {
+    background: #218838;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+
+/* 6. Tables */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
+    font-size: 0.95rem;
 }
 
 th, td {
     border: 1px solid var(--border-color);
-    padding: 0.8rem;
+    padding: 1rem;
     text-align: left;
 }
 
 th {
-    background-color: var(--secondary-color);
+    background-color: var(--bg-color);
+    font-weight: 600;
+}
+
+tbody tr:nth-child(even) {
+    background-color: var(--bg-color); /* Zebra striping for readability */
 }
 
 td.absent {
-    background-color: #ffdddd;
-    color: #d8000c;
-    font-weight: bold;
+    background-color: #ffebee;
+    color: var(--accent-color-danger);
+    font-weight: 600;
     text-align: center;
 }
 
 td.present {
     text-align: center;
-    color: #4f8a10;
+    color: #388e3c;
 }
 
 .fine {
-    font-weight: bold;
-    color: #d8000c;
+    font-weight: 700;
+    color: var(--accent-color-danger);
 }
 
-/* Login and Filter Styles */
-#teacher-login-view, #hod-login-view {
-    max-width: 400px;
-    margin: 2rem auto;
-    text-align: center;
-}
-
-#teacher-login-view input, #hod-login-view input {
-    margin-bottom: 1rem;
-}
-
+/* 7. Other Elements & Message Popup */
 .div-selector, .filters {
     margin-bottom: 1.5rem;
     display: flex;
     gap: 1rem;
     align-items: center;
+    flex-wrap: wrap; /* Allows filters to wrap on small screens */
 }
 
-#hod-download-pdf {
-    margin-left: auto;
-    background-color: #28a745;
-}
-#hod-download-pdf:hover {
-    background-color: #218838;
-}
-
-/* Message Popup */
 #message-container {
     position: fixed;
     bottom: 20px;
     right: 20px;
     padding: 1rem 1.5rem;
-    border-radius: 5px;
+    border-radius: 8px;
     color: white;
+    font-weight: 500;
     display: none;
     z-index: 1000;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 #message-container.success {
-    background-color: #28a745;
+    background-color: var(--accent-color-success);
 }
 #message-container.error {
-    background-color: #d8000c;
+    background-color: var(--accent-color-danger);
+}
+
+/* 8. Responsiveness */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+    nav {
+        flex-wrap: wrap;
+        margin-top: 0;
+    }
+    .nav-button {
+        margin-bottom: 10px;
+    }
+    main {
+        padding: 1rem;
+    }
+    section {
+        padding: 1.5rem;
+    }
 }

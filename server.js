@@ -102,33 +102,47 @@ app.get('/api/students/:division', async (req, res) => {
 
 
 // 3. Submit New Attendance Record
-app.post('/api/attendance', async (req, res) => {
-    const { date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos } = req.body;
+// NEW, CORRECTED FUNCTION
+app.post('/api/attendance/remove', async (req, res) => {
+    const { date, time_slot, roll_no, division } = req.body;
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        const lectureInsertQuery = `
-            INSERT INTO lectures (date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;
-        `;
-        const lectureRes = await client.query(lectureInsertQuery, [date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos]);
-        const lectureId = lectureRes.rows[0].id;
-        
-        for (const roll_no of absent_roll_nos) {
-            const absentInsertQuery = `
-                INSERT INTO attendance_records (lecture_id, student_roll_no, division, date, status)
-                VALUES ($1, $2, $3, $4, 'A');
-            `;
-            await client.query(absentInsertQuery, [lectureId, parseInt(roll_no), division, date]);
-        }
+        const lectureRes = await client.query(
+            'SELECT id FROM lectures WHERE date = $1 AND time_slot = $2 AND division = $3',
+            [date, time_slot, division]
+        );
 
-        await client.query('COMMIT');
-        res.status(201).json({ message: 'Attendance submitted successfully!' });
+        if (lectureRes.rows.length === 0) {
+            return res.status(404).json({ message: 'No lecture found for the specified date, time, and division.' });
+        }
+        const lectureId = lectureRes.rows[0].id;
+
+        // Using parseInt() here to fix the bug
+        const studentRollNoInt = parseInt(roll_no, 10);
+
+        const deleteRes = await client.query(
+            'DELETE FROM attendance_records WHERE lecture_id = $1 AND student_roll_no = $2',
+            [lectureId, studentRollNoInt] // Use the integer version
+        );
+
+        await client.query(
+            `UPDATE lectures SET absent_roll_nos = array_remove(absent_roll_nos, $1) WHERE id = $2`,
+            [studentRollNoInt, lectureId] // Use the integer version
+        );
+
+        if (deleteRes.rowCount > 0) {
+            await client.query('COMMIT');
+            res.json({ message: `Absence for Roll No ${studentRollNoInt} on ${date} has been removed.` });
+        } else {
+            await client.query('ROLLBACK');
+            res.status(404).json({ message: 'Student was not marked absent for this lecture.' });
+        }
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error submitting attendance:', error);
-        res.status(500).json({ message: 'Failed to submit attendance. Check if roll numbers are valid.' });
+        console.error('Error removing absence:', error);
+        res.status(500).json({ message: 'Failed to remove absence record.' });
     } finally {
         client.release();
     }
