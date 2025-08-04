@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
-    const API_BASE_URL = ''; // This will be your Render URL later, leave empty for local dev
+const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with your actual Render URL
     
     // --- DOM ELEMENTS ---
     const navButtons = document.querySelectorAll('.nav-button');
