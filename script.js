@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
-const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with your actual Render URL
+    const API_BASE_URL = ''; // This will be your Render URL later, leave empty for local dev
     
     // --- DOM ELEMENTS ---
     const navButtons = document.querySelectorAll('.nav-button');
@@ -15,6 +15,7 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
     const teacherAccessCodeInput = document.getElementById('teacher-access-code');
     const attendanceForm = document.getElementById('attendance-form');
     const dateInput = document.getElementById('att-date');
+    const dateDisplayInput = document.getElementById('att-date-display'); // This is the visible one
     const typeSelect = document.getElementById('att-type');
     const timeSelect = document.getElementById('att-time');
 
@@ -33,13 +34,30 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
     const hodDownloadPdfBtn = document.getElementById('hod-download-pdf');
     const hodTableContainer = document.getElementById('hod-table-container');
 
-    // Fine Removal Section
-    const removeFineForm = document.getElementById('remove-fine-form');
+    // Fine Removal Forms (they share some IDs, which is okay as only one is visible at a time)
+    const removeFineForms = document.querySelectorAll('#remove-fine-form');
+
+
+    // --- INITIALIZATION CODE (runs after all elements are found) ---
+
+    // Auto-set date with dual format
+    const today = new Date();
+    // Format for the user (DD-MM-YYYY)
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const year = today.getFullYear();
+    if (dateDisplayInput) { // Check if the element exists before setting its value
+        dateDisplayInput.value = `${day}-${month}-${year}`;
+    }
+    // Format for the database (YYYY-MM-DD)
+    if (dateInput) { // Check if the element exists
+        dateInput.value = today.toLocaleDateString('en-CA');
+    }
 
     // --- HELPER FUNCTIONS ---
     const showMessage = (text, type = 'success') => {
         messageContainer.textContent = text;
-        messageContainer.className = type; // 'success' or 'error'
+        messageContainer.className = type;
         messageContainer.style.display = 'block';
         setTimeout(() => {
             messageContainer.style.display = 'none';
@@ -57,18 +75,16 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
         } catch (error) {
             showMessage(error.message, 'error');
             console.error('API Fetch Error:', error);
-            throw error; // Re-throw to handle in calling function if needed
+            throw error;
         }
     };
 
     // --- NAVIGATION LOGIC ---
     navButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Deactivate all buttons and hide all sections
             navButtons.forEach(btn => btn.classList.remove('active'));
             sections.forEach(sec => sec.classList.add('hidden'));
 
-            // Activate the clicked button and show the corresponding section
             button.classList.add('active');
             const sectionId = button.id.replace('nav-', '') + '-section';
             document.getElementById(sectionId).classList.remove('hidden');
@@ -76,9 +92,6 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
     });
 
     // --- TEACHER SECTION LOGIC ---
-    // Auto-set date
-    dateInput.value = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
-
     // Auto-select time for practicals
     typeSelect.addEventListener('change', () => {
         if (typeSelect.value === 'Practical') {
@@ -102,9 +115,7 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
             teacherLoginView.classList.add('hidden');
             teacherFormView.classList.remove('hidden');
             showMessage('Login successful!');
-        } catch (error) {
-            // Error message is already shown by apiFetch
-        }
+        } catch (error) { /* Error handled by apiFetch */ }
     });
 
     // Attendance Form Submission
@@ -112,7 +123,7 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
         e.preventDefault();
         const formData = new FormData(attendanceForm);
         const data = Object.fromEntries(formData.entries());
-        data.absent_roll_nos = data.absent_roll_nos.split(',').map(n => n.trim()).filter(Boolean); // Convert to array
+        data.absent_roll_nos = data.absent_roll_nos.split(',').map(n => n.trim()).filter(Boolean);
 
         try {
             const result = await apiFetch('/attendance', {
@@ -122,10 +133,10 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
             });
             showMessage(result.message);
             attendanceForm.reset();
-            dateInput.value = new Date().toLocaleDateString('en-CA'); // Reset date
-        } catch (error) {
-            // Error handling done in apiFetch
-        }
+            // Re-populate the date fields after reset
+            dateDisplayInput.value = `${day}-${month}-${year}`;
+            dateInput.value = today.toLocaleDateString('en-CA');
+        } catch (error) { /* Error handled */ }
     });
     
     // --- STUDENT SECTION LOGIC ---
@@ -134,32 +145,15 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
             const data = await apiFetch(`/students/${division}`);
             studentTableHeading.textContent = `Displaying Data for Division ${division}`;
             
-            let tableHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Roll No</th>
-                            <th>Student Name</th>
-            `;
-            // Add date headers
+            let tableHTML = `<table><thead><tr><th>Roll No</th><th>Student Name</th>`;
             data.dates.forEach(date => {
                 tableHTML += `<th>${new Date(date).toLocaleDateString('en-GB')}</th>`;
             });
+            tableHTML += `<th>Total Fine</th></tr></thead><tbody>`;
 
-            tableHTML += `
-                            <th>Total Fine</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            // Add student rows
             data.students.forEach(student => {
                 let totalAbsences = 0;
-                tableHTML += `<tr>
-                    <td>${student.roll_no}</td>
-                    <td>${student.name}</td>
-                `;
+                tableHTML += `<tr><td>${student.roll_no}</td><td>${student.name}</td>`;
                 data.dates.forEach(date => {
                     const record = student.attendance[date];
                     if (record && record.status === 'A') {
@@ -169,13 +163,12 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
                         tableHTML += `<td class="present">P</td>`;
                     }
                 });
-                const totalFine = totalAbsences * 100; // Fine logic
+                const totalFine = totalAbsences * 100;
                 tableHTML += `<td class="fine">₹${totalFine}</td></tr>`;
             });
 
             tableHTML += `</tbody></table>`;
             studentTableContainer.innerHTML = tableHTML;
-
         } catch (error) {
             studentTableContainer.innerHTML = `<p>Could not load student data.</p>`;
         }
@@ -197,10 +190,8 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
             hodLoginView.classList.add('hidden');
             hodDataView.classList.remove('hidden');
             showMessage('HOD Login successful!');
-            fetchAndDisplayHodData(); // Fetch initial data
-        } catch(error) {
-            // Error handled by apiFetch
-        }
+            fetchAndDisplayHodData();
+        } catch(error) { /* Error handled */ }
     });
     
     const fetchAndDisplayHodData = async () => {
@@ -213,35 +204,9 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
 
         try {
             const records = await apiFetch(`/attendance${query}`);
-            let tableHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Div</th>
-                            <th>Subject</th>
-                            <th>Topic</th>
-                            <th>Teacher</th>
-                            <th>Type</th>
-                            <th>Absentees (Roll No)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+            let tableHTML = `<table><thead><tr><th>Date</th><th>Time</th><th>Div</th><th>Subject</th><th>Topic</th><th>Teacher</th><th>Type</th><th>Absentees (Roll No)</th></tr></thead><tbody>`;
             records.forEach(rec => {
-                tableHTML += `
-                    <tr>
-                        <td>${new Date(rec.date).toLocaleDateString('en-GB')}</td>
-                        <td>${rec.time_slot}</td>
-                        <td>${rec.division}</td>
-                        <td>${rec.subject}</td>
-                        <td>${rec.topic}</td>
-                        <td>${rec.teacher_name}</td>
-                        <td>${rec.type}</td>
-                        <td>${rec.absent_roll_nos.join(', ')}</td>
-                    </tr>
-                `;
+                tableHTML += `<tr><td>${new Date(rec.date).toLocaleDateString('en-GB')}</td><td>${rec.time_slot}</td><td>${rec.division}</td><td>${rec.subject}</td><td>${rec.topic}</td><td>${rec.teacher_name}</td><td>${rec.type}</td><td>${rec.absent_roll_nos.join(', ')}</td></tr>`;
             });
             tableHTML += `</tbody></table>`;
             hodTableContainer.innerHTML = tableHTML;
@@ -252,56 +217,38 @@ const API_BASE_URL = 'https://pravara-attendance.onrender.com'; // Replace with 
 
     hodFilterBtn.addEventListener('click', fetchAndDisplayHodData);
 
-    // PDF Download (simplified using browser's print function)
+    // PDF Download
     hodDownloadPdfBtn.addEventListener('click', () => {
         const printContent = hodTableContainer.innerHTML;
         const originalContent = document.body.innerHTML;
-        document.body.innerHTML = `
-            <html>
-                <head>
-                    <title>Attendance Report</title>
-                    <style>
-                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-                        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-                        th { background-color: #f2f2f2; }
-                        h1 { font-size: 18px; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Attendance Report - Pravara Engg College</h1>
-                    ${printContent}
-                </body>
-            </html>
-        `;
+        document.body.innerHTML = `<html><head><title>Attendance Report</title><style>table { width: 100%; border-collapse: collapse; font-size: 12px; } th, td { border: 1px solid #ccc; padding: 8px; text-align: left; } th { background-color: #f2f2f2; } h1 { font-size: 18px; }</style></head><body><h1>Attendance Report - Pravara Rural Engineering College</h1>${printContent}</body></html>`;
         window.print();
-        document.body.innerHTML = originalContent;
-        // Re-attach event listeners because document body was replaced. This is a complex problem,
-        // so for now we'll just reload the page for simplicity after printing.
         window.location.reload();
     });
 
-
     // --- FINE REMOVAL LOGIC ---
-    removeFineForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const data = {
-            date: document.getElementById('fine-date').value,
-            time_slot: document.getElementById('fine-time').value,
-            roll_no: document.getElementById('fine-rollno').value,
-            division: document.getElementById('fine-div').value
-        };
+    // This now applies to both forms (Teacher and HOD)
+    removeFineForms.forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Get data from the specific form that was submitted
+            const data = {
+                date: e.target.querySelector('#fine-date').value,
+                time_slot: e.target.querySelector('#fine-time').value,
+                roll_no: e.target.querySelector('#fine-rollno').value,
+                division: e.target.querySelector('#fine-div').value
+            };
 
-        try {
-            const result = await apiFetch('/attendance/remove', {
-                 method: 'POST',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify(data)
-            });
-            showMessage(result.message);
-            removeFineForm.reset();
-        } catch(error) {
-            // Error handled
-        }
+            try {
+                const result = await apiFetch('/attendance/remove', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(data)
+                });
+                showMessage(result.message);
+                form.reset();
+            } catch(error) { /* Error handled */ }
+        });
     });
 
 });
