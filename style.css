@@ -1,18 +1,17 @@
-/* --- MODERN STYLES V2 --- */
+/* --- MODERN COLLEGE PORTAL STYLE --- */
 
 /* 1. Root Variables & Global Styles */
 :root {
-    --primary-color: #6a11cb;
-    --secondary-color: #2575fc;
-    --bg-color: #f8f9fa;
-    --surface-color: #ffffff;
-    --text-color: #495057;
-    --text-light-color: #6c757d;
-    --border-color: #e9ecef;
+    --primary-color: #0D47A1; /* A deep, professional blue */
+    --primary-hover: #0B3A82; /* A slightly darker blue for hovers */
+    --header-bg: #1565C0;    /* A rich blue for the header */
+    --bg-color: #F5F7FA;     /* A very light grey for the page background */
+    --surface-color: #FFFFFF; /* White for cards and content areas */
+    --border-color: #DEE2E6;  /* A light grey for borders */
+    --text-color: #343A40;    /* A dark grey for main text */
+    --text-light-color: #6c757d; /* A lighter grey for subtitles */
     --accent-color-success: #28a745;
     --accent-color-danger: #dc3545;
-    --shadow-color: rgba(0, 0, 0, 0.08);
-    --primary-gradient: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
 }
 
 * {
@@ -25,76 +24,74 @@ body {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    line-height: 1.6;
+    line-height: 1.7;
 }
 
 /* 2. Header */
 header {
-    background: var(--primary-gradient);
+    background-color: var(--header-bg);
     color: white;
     text-align: center;
-    padding: 2rem 1rem;
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
+    padding: 2.5rem 1rem;
+    border-bottom: 5px solid var(--primary-color);
 }
 
 header h1 {
     font-weight: 700;
-    font-size: 2.2rem;
-    margin-bottom: 0.25rem;
+    font-size: 2.5rem;
+    letter-spacing: 1px;
 }
 
 header p {
     font-weight: 400;
+    font-size: 1.1rem;
     opacity: 0.9;
+    margin-top: 0.5rem;
 }
 
-/* 3. Navigation Tabs */
+/* 3. Navigation Bar */
 nav {
     display: flex;
     justify-content: center;
-    padding: 1rem;
-    margin-top: -20px; /* Pulls the tabs up slightly */
-    position: relative;
-    z-index: 10;
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .nav-button {
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 4px solid transparent;
+    padding: 1rem 1.5rem;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin: 0 5px;
-    border-radius: 50px; /* Pill shape */
-    box-shadow: 0 4px 6px var(--shadow-color);
+    color: var(--text-light-color);
+    margin-top: -4px; /* Align with bottom border */
 }
 
 .nav-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px var(--shadow-color);
+    color: var(--primary-color);
 }
 
 .nav-button.active {
-    background: var(--primary-gradient);
-    color: white;
-    border-color: transparent;
+    border-bottom: 4px solid var(--primary-color);
+    color: var(--primary-color);
 }
 
-/* 4. Main Content Area & Cards */
+/* 4. Main Content Area & Sections */
 main {
-    padding: 2rem 1rem;
-    max-width: 950px;
+    padding: 2.5rem 1rem;
+    max-width: 1100px;
     margin: 0 auto;
 }
 
 section {
     background: var(--surface-color);
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px var(--shadow-color);
+    padding: 2.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
 .hidden {
@@ -102,22 +99,23 @@ section {
 }
 
 h2, h3 {
-    color: var(--primary-color);
     font-weight: 600;
+    font-size: 1.5rem;
     margin-bottom: 1.5rem;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
 }
 
 /* 5. Forms & Inputs */
 form {
     display: grid;
-    gap: 1.25rem;
+    gap: 1.5rem;
 }
 
 label {
     font-weight: 600;
-    margin-bottom: -5px;
+    font-size: 0.95rem;
+    color: var(--text-light-color);
 }
 
 input[type="text"],
@@ -128,8 +126,8 @@ input[type="date"],
 select {
     width: 100%;
     padding: 0.8rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
     transition: border-color 0.3s, box-shadow 0.3s;
@@ -138,85 +136,85 @@ select {
 input:focus, select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.2);
+    box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.2);
 }
 
 button {
-    padding: 0.8rem 1.5rem;
-    background: var(--primary-gradient);
+    padding: 0.8rem 2rem;
+    background-color: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    justify-self: start; /* Align button to the start of the grid cell */
+    transition: background-color 0.3s ease;
+    justify-self: start;
 }
 
 button:hover {
-    transform: scale(1.03);
-    box-shadow: 0 4px 15px rgba(106, 17, 203, 0.4);
+    background-color: var(--primary-hover);
 }
 
 #hod-download-pdf {
-    background: var(--accent-color-success);
+    background-color: var(--accent-color-success);
     margin-left: auto;
     justify-self: end;
 }
 #hod-download-pdf:hover {
-    background: #218838;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    background-color: #218838;
 }
-
 
 /* 6. Tables */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1rem;
-    font-size: 0.95rem;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
 }
 
 th, td {
     border: 1px solid var(--border-color);
-    padding: 1rem;
+    padding: 0.9rem 1rem;
     text-align: left;
+    vertical-align: middle;
 }
 
-th {
-    background-color: var(--bg-color);
+thead th {
+    background-color: #E9ECEF;
     font-weight: 600;
+    font-size: 0.95rem;
 }
 
 tbody tr:nth-child(even) {
-    background-color: var(--bg-color); /* Zebra striping for readability */
+    background-color: #F8F9FA;
 }
 
 td.absent {
-    background-color: #ffebee;
-    color: var(--accent-color-danger);
-    font-weight: 600;
+    background-color: #FBE9E7;
+    color: #BF360C;
+    font-weight: 700;
     text-align: center;
 }
 
 td.present {
     text-align: center;
-    color: #388e3c;
+    color: #2E7D32;
 }
 
 .fine {
     font-weight: 700;
     color: var(--accent-color-danger);
+    font-size: 1rem;
 }
 
-/* 7. Other Elements & Message Popup */
+/* 7. Other Elements */
 .div-selector, .filters {
     margin-bottom: 1.5rem;
     display: flex;
     gap: 1rem;
     align-items: center;
-    flex-wrap: wrap; /* Allows filters to wrap on small screens */
+    flex-wrap: wrap;
 }
 
 #message-container {
@@ -224,34 +222,27 @@ td.present {
     bottom: 20px;
     right: 20px;
     padding: 1rem 1.5rem;
-    border-radius: 8px;
+    border-radius: 6px;
     color: white;
     font-weight: 500;
     display: none;
     z-index: 1000;
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
-#message-container.success {
-    background-color: var(--accent-color-success);
-}
-#message-container.error {
-    background-color: var(--accent-color-danger);
-}
+#message-container.success { background-color: var(--accent-color-success); }
+#message-container.error { background-color: var(--accent-color-danger); }
 
 /* 8. Responsiveness */
 @media (max-width: 768px) {
     header h1 {
         font-size: 1.8rem;
     }
-    nav {
-        flex-wrap: wrap;
-        margin-top: 0;
-    }
     .nav-button {
-        margin-bottom: 10px;
+        padding: 1rem 0.75rem;
+        font-size: 0.9rem;
     }
     main {
-        padding: 1rem;
+        padding: 1.5rem 1rem;
     }
     section {
         padding: 1.5rem;
