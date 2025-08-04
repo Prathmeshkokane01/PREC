@@ -248,3 +248,70 @@ td.present {
         padding: 1.5rem;
     }
 }
+/* --- NEW HEADER STYLES WITH LOGO --- */
+
+header {
+    background-color: var(--header-bg);
+    color: white;
+    padding: 1rem;
+    border-bottom: 5px solid var(--primary-color);
+    width: 100%;
+}
+
+.header-container {
+    display: flex;
+    align-items: center; /* Vertically aligns logo and text */
+    justify-content: center; /* Centers the whole block */
+    max-width: 1200px;
+    margin: 0 auto; /* Centers the container on the page */
+    gap: 25px; /* Creates space between the logo and the text */
+}
+
+.college-logo {
+    height: 85px; /* You can change this value to make the logo bigger or smaller */
+    width: auto; /* Maintain aspect ratio */
+    flex-shrink: 0; /* Prevents the logo from shrinking if the window is too small */
+}
+
+.header-text {
+    text-align: left; /* Aligns text to the left, right next to the logo */
+}
+
+/* Overriding previous h1 styles specifically for the header */
+header h1 {
+    font-size: 2.2rem; /* Adjust as needed */
+    margin: 0;
+    padding: 0;
+    border: none; /* Removes any bottom border from the general h1 style */
+    line-height: 1.2;
+}
+
+/* Overriding previous p styles specifically for the header */
+header p {
+    font-size: 1.1rem;
+    margin: 0.25rem 0 0 0;
+    padding: 0;
+    opacity: 0.9;
+}
+
+
+/* This makes the header responsive for mobile phones */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column; /* Stacks the logo on top of the text */
+        text-align: center;
+        gap: 15px;
+    }
+
+    .header-text {
+        text-align: center;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    header p {
+        font-size: 0.9rem;
+    }
+}
