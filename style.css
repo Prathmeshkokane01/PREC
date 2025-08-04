@@ -354,3 +354,33 @@ nav {
         font-size: 0.9rem;
     }
 }
+/* --- FINAL UI POLISH AND SPACING FIXES --- */
+
+/* 1. Improves the main page background and content cards */
+body {
+    background-color: #eef2f7; /* A slightly richer background color */
+}
+
+section {
+    background: var(--surface-color);
+    padding: 2.5rem;
+    border-radius: 12px; /* Slightly more rounded corners */
+    border: 1px solid var(--border-color);
+    border-top: 5px solid var(--primary-color); /* Adds a professional colored top border */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.07); /* A softer, more modern shadow */
+}
+
+
+/* 2. Fixes the spacing on the Login buttons */
+#teacher-login-view button,
+#hod-login-view button {
+    margin-top: 1rem; /* Adds a nice gap above the login button */
+}
+
+
+/* 3. Fixes the spacing for the "Remove Fine" form */
+#fine-section-container {
+    margin-top: 3.5rem; /* Creates a large space separating it from the form above */
+    padding-top: 2rem;
+    border-top: 2px dashed var(--border-color); /* A dashed line as a visual separator */
+}
