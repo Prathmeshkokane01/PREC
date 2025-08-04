@@ -62,7 +62,7 @@ app.get('/api/students/:division', async (req, res) => {
         const students = studentRes.rows;
 
         const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
         
         // THIS IS THE VERIFIED CORRECT QUERY
         const attendanceRes = await client.query(
