@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance & Fine Management - Pravara Engg College</title>
+    <title>Attendance & Fine Management - Pravara Rural Engineering College</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <header>
         <div class="header-container">
             <img src="college_logo.png" alt="Pravara Rural Engineering College Logo" class="college-logo">
@@ -24,11 +27,10 @@
         <button id="nav-teacher" class="nav-button active">Teacher Section</button>
         <button id="nav-student" class="nav-button">Student Section</button>
         <button id="nav-hod" class="nav-button">HOD Section</button>
-        <button id="nav-fine" class="nav-button">Remove Fine</button>
     </nav>
 
     <main>
-        <section id="teacher-section"></section>
+        <section id="teacher-section">
             <div id="teacher-login-view">
                 <h2>Teacher Login</h2>
                 <input type="email" id="teacher-email" placeholder="Enter your Email">
@@ -40,28 +42,22 @@
                 <form id="attendance-form">
                     <label for="att-date">Date:</label>
                     <input type="text" id="att-date" name="date" readonly>
-
                     <label for="att-div">Division:</label>
                     <select id="att-div" name="division">
                         <option value="A">Div A</option>
                         <option value="B">Div B</option>
                     </select>
-
                     <label for="att-subject">Subject Name:</label>
                     <input type="text" id="att-subject" name="subject" required>
-
                     <label for="att-topic">Topic Covered:</label>
                     <input type="text" id="att-topic" name="topic" required>
-
                     <label for="att-teacher">Teacher Name:</label>
                     <input type="text" id="att-teacher" name="teacher_name" required>
-                    
                     <label for="att-type">Type:</label>
                     <select id="att-type" name="type">
                         <option value="Theory">Theory</option>
                         <option value="Practical">Practical</option>
                     </select>
-
                     <label for="att-time">Time Slot:</label>
                     <select id="att-time" name="time_slot">
                         <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
@@ -71,10 +67,8 @@
                         <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
                         <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
                     </select>
-
-                    <label for="att-absent">Absent Roll Numbers (comma-separated, e.g., 5,12,18):</label>
+                    <label for="att-absent">Absent Roll Numbers (comma-separated):</label>
                     <input type="text" id="att-absent" name="absent_roll_nos" placeholder="e.g., 4, 9, 10">
-
                     <button type="submit">Submit Attendance</button>
                 </form>
 
@@ -83,7 +77,6 @@
                     <form id="remove-fine-form">
                         <label for="fine-date">Date of Lecture:</label>
                         <input type="date" id="fine-date" required>
-        
                         <label for="fine-time">Time Slot of Lecture:</label>
                         <select id="fine-time" required>
                             <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
@@ -93,21 +86,19 @@
                             <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
                             <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
                         </select>
-                        
                         <label for="fine-rollno">Student Roll Number to Clear:</label>
                         <input type="number" id="fine-rollno" required>
-        
                         <label for="fine-div">Student Division:</label>
                         <select id="fine-div" required>
                              <option value="A">Div A</option>
                              <option value="B">Div B</option>
                         </select>
-        
                         <button type="submit">Remove Absence Record</button>
                     </form>
                 </div>
-                </div>
+            </div>
         </section>
+
         <section id="student-section" class="hidden">
             <h2>Computer Engg. - Student View</h2>
             <div class="div-selector">
@@ -120,85 +111,53 @@
         </section>
 
         <section id="hod-section" class="hidden">
-            <div id="hod-login-view">
-               <h2>HOD Login</h2>
-               <input type="password" id="hod-access-code" placeholder="Enter HOD Access Code">
-               <button id="hod-login-btn">Login</button>
-           </div>
-           <div id="hod-data-view" class="hidden">
-                <h2>HOD Dashboard</h2>
-               <div class="filters">
-                   <label for="hod-filter-div">Filter by Division:</label>
-                   <select id="hod-filter-div">
-                       <option value="ALL">All Divisions</option>
-                       <option value="A">Div A</option>
-                       <option value="B">Div B</option>
-                   </select>
-                   <label for="hod-filter-date">Filter by Date:</label>
-                   <input type="date" id="hod-filter-date">
-                   <button id="hod-filter-btn">Apply Filter</button>
-                   <button id="hod-download-pdf">Download as PDF</button>
-               </div>
-               <div id="hod-table-container">
-                   </div>
+             <div id="hod-login-view">
+                <h2>HOD Login</h2>
+                <input type="password" id="hod-access-code" placeholder="Enter HOD Access Code">
+                <button id="hod-login-btn">Login</button>
+            </div>
+            <div id="hod-data-view" class="hidden">
+                 <h2>HOD Dashboard</h2>
+                <div class="filters">
+                    <label for="hod-filter-div">Filter by Division:</label>
+                    <select id="hod-filter-div">
+                        <option value="ALL">All Divisions</option>
+                        <option value="A">Div A</option>
+                        <option value="B">Div B</option>
+                    </select>
+                    <label for="hod-filter-date">Filter by Date:</label>
+                    <input type="date" id="hod-filter-date">
+                    <button id="hod-filter-btn">Apply Filter</button>
+                    <button id="hod-download-pdf">Download as PDF</button>
+                </div>
+                <div id="hod-table-container">
+                    </div>
 
-               <div id="fine-section-container">
-                   <h3>Remove an Absence / Fine</h3>
-                   <form id="remove-fine-form">
-                       <label for="fine-date">Date of Lecture:</label>
-                       <input type="date" id="fine-date" required>
-       
-                       <label for="fine-time">Time Slot of Lecture:</label>
-                       <select id="fine-time" required>
-                           <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
-                           <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
-                           <option value="11.30am to 1.20pm">11:30 AM - 1:20 PM</option>
-                           <option value="2.15pm to 3.10pm">2:15 PM - 3:10 PM</option>
-                           <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
-                           <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
-                       </select>
-                       
-                       <label for="fine-rollno">Student Roll Number to Clear:</label>
-                       <input type="number" id="fine-rollno" required>
-       
-                       <label for="fine-div">Student Division:</label>
-                       <select id="fine-div" required>
-                            <option value="A">Div A</option>
-                            <option value="B">Div B</option>
-                       </select>
-       
-                       <button type="submit">Remove Absence Record</button>
-                   </form>
-               </div>
-               </div>
-       </section>
-        <section id="fine-section" class="hidden">
-            <h2>Remove an Absence / Fine</h2>
-            <form id="remove-fine-form">
-                <label for="fine-date">Date of Lecture:</label>
-                <input type="date" id="fine-date" required>
-
-                <label for="fine-time">Time Slot of Lecture:</label>
-                <select id="fine-time" required>
-                    <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
-                    <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
-                    <option value="11.30am to 1.20pm">11:30 AM - 1:20 PM</option>
-                    <option value="2.15pm to 3.10pm">2:15 PM - 3:10 PM</option>
-                    <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
-                    <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
-                </select>
-                
-                <label for="fine-rollno">Student Roll Number to Clear:</label>
-                <input type="number" id="fine-rollno" required>
-
-                <label for="fine-div">Student Division:</label>
-                <select id="fine-div" required>
-                     <option value="A">Div A</option>
-                     <option value="B">Div B</option>
-                </select>
-
-                <button type="submit">Remove Absence Record</button>
-            </form>
+                <div id="fine-section-container">
+                    <h3>Remove an Absence / Fine</h3>
+                    <form id="remove-fine-form">
+                        <label for="fine-date">Date of Lecture:</label>
+                        <input type="date" id="fine-date" required>
+                        <label for="fine-time">Time Slot of Lecture:</label>
+                        <select id="fine-time" required>
+                            <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
+                            <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
+                            <option value="11.30am to 1.20pm">11:30 AM - 1:20 PM</option>
+                            <option value="2.15pm to 3.10pm">2:15 PM - 3:10 PM</option>
+                            <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
+                            <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
+                        </select>
+                        <label for="fine-rollno">Student Roll Number to Clear:</label>
+                        <input type="number" id="fine-rollno" required>
+                        <label for="fine-div">Student Division:</label>
+                        <select id="fine-div" required>
+                             <option value="A">Div A</option>
+                             <option value="B">Div B</option>
+                        </select>
+                        <button type="submit">Remove Absence Record</button>
+                    </form>
+                </div>
+            </div>
         </section>
     </main>
     
