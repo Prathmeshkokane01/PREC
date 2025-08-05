@@ -221,7 +221,17 @@ app.post('/api/attendance', async (req, res) => {
         client.release();
     }
 });
-
+// 6. Delete a specific Lecture Record
+app.delete('/api/lectures/:id', async (req, res) => {
+    const { id } = req.params; // Get the lecture ID from the URL
+    try {
+        await pool.query('DELETE FROM lectures WHERE id = $1', [id]);
+        res.status(200).json({ message: 'Lecture record and all associated absences have been deleted.' });
+    } catch (error) {
+        console.error('Error deleting lecture:', error);
+        res.status(500).json({ message: 'Failed to delete lecture record.' });
+    }
+});
 
 // --- START SERVER ---
 app.listen(PORT, () => {

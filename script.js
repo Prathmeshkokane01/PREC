@@ -193,29 +193,64 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchAndDisplayHodData();
         } catch(error) { /* Error handled */ }
     });
-    
-    const fetchAndDisplayHodData = async () => {
-        const div = document.getElementById('hod-filter-div').value;
-        const date = document.getElementById('hod-filter-date').value;
+    // Replace the entire old function with this new one
+const fetchAndDisplayHodData = async () => {
+    const div = document.getElementById('hod-filter-div').value;
+    const date = document.getElementById('hod-filter-date').value;
 
-        let query = `?`;
-        if (div && div !== 'ALL') query += `division=${div}&`;
-        if (date) query += `date=${date}`;
+    let query = `?`;
+    if (div && div !== 'ALL') query += `division=${div}&`;
+    if (date) query += `date=${date}`;
 
-        try {
-            const records = await apiFetch(`/attendance${query}`);
-            let tableHTML = `<table><thead><tr><th>Date</th><th>Time</th><th>Div</th><th>Subject</th><th>Topic</th><th>Teacher</th><th>Type</th><th>Absentees (Roll No)</th></tr></thead><tbody>`;
-            records.forEach(rec => {
-                tableHTML += `<tr><td>${new Date(rec.date).toLocaleDateString('en-GB')}</td><td>${rec.time_slot}</td><td>${rec.division}</td><td>${rec.subject}</td><td>${rec.topic}</td><td>${rec.teacher_name}</td><td>${rec.type}</td><td>${rec.absent_roll_nos.join(', ')}</td></tr>`;
-            });
-            tableHTML += `</tbody></table>`;
-            hodTableContainer.innerHTML = tableHTML;
-        } catch (error) {
-             hodTableContainer.innerHTML = `<p>Could not load attendance records.</p>`;
-        }
-    };
+    try {
+        const records = await apiFetch(`/attendance${query}`);
+        // ADDED "Actions" HEADER
+        let tableHTML = `<table><thead><tr><th>Date</th><th>Time</th><th>Div</th><th>Subject</th><th>Topic</th><th>Teacher</th><th>Type</th><th>Absentees (Roll No)</th><th>Actions</th></tr></thead><tbody>`;
+        records.forEach(rec => {
+            tableHTML += `
+                <tr>
+                    <td>${new Date(rec.date).toLocaleDateString('en-GB')}</td>
+                    <td>${rec.time_slot}</td>
+                    <td>${rec.division}</td>
+                    <td>${rec.subject}</td>
+                    <td>${rec.topic}</td>
+                    <td>${rec.teacher_name}</td>
+                    <td>${rec.type}</td>
+                    <td>${rec.absent_roll_nos.join(', ')}</td>
+                    <td>
+                        <button class="delete-btn" data-lecture-id="${rec.id}">Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tableHTML += `</tbody></table>`;
+        hodTableContainer.innerHTML = tableHTML;
+    } catch (error) {
+         hodTableContainer.innerHTML = `<p>Could not load attendance records.</p>`;
+    }
+};
 
     hodFilterBtn.addEventListener('click', fetchAndDisplayHodData);
+    // NEW CODE BLOCK - Listens for clicks on any delete button in the HOD table
+hodTableContainer.addEventListener('click', async (e) => {
+    // Check if a delete button was the specific element clicked
+    if (e.target && e.target.classList.contains('delete-btn')) {
+        const lectureId = e.target.dataset.lectureId;
+
+        // Show a confirmation popup before deleting
+        if (confirm('Are you sure you want to permanently delete this entire lecture record? This action cannot be undone.')) {
+            try {
+                const result = await apiFetch(`/lectures/${lectureId}`, {
+                    method: 'DELETE'
+                });
+                showMessage(result.message); // Show success message
+                fetchAndDisplayHodData(); // Refresh the table to show the row is gone
+            } catch (error) {
+                // The apiFetch function will automatically show the error message
+            }
+        }
+    }
+});
 
     // PDF Download
     hodDownloadPdfBtn.addEventListener('click', () => {

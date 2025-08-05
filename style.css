@@ -384,3 +384,17 @@ section {
     padding-top: 2rem;
     border-top: 2px dashed var(--border-color); /* A dashed line as a visual separator */
 }
+/* Style for the new delete button in the HOD table */
+.delete-btn {
+    background: var(--accent-color-danger); /* Red background */
+    color: white;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background: #a80000; /* Darker red on hover */
+}
