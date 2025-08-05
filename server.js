@@ -54,55 +54,7 @@ app.post('/api/auth/hod', (req, res) => {
 
 
 // 2. Get Student Data for Student View
-app.get('/api/students/:division', async (req, res) => {
-    const { division } = req.params;
-    const client = await pool.connect();
-    try {
-        const studentRes = await client.query('SELECT roll_no, name FROM students WHERE division = $1 ORDER BY roll_no', [division]);
-        const students = studentRes.rows;
-
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-        
-        // THIS IS THE VERIFIED CORRECT QUERY
-        const attendanceRes = await client.query(
-            'SELECT student_roll_no, date, status FROM attendance_records WHERE division = $1 AND date >= $2',
-            [division, sevenDaysAgo]
-        );
-
-        const attendanceMap = {};
-        attendanceRes.rows.forEach(row => {
-            if (!attendanceMap[row.student_roll_no]) {
-                attendanceMap[row.student_roll_no] = {};
-            }
-            attendanceMap[row.student_roll_no][new Date(row.date).toISOString().split('T')[0]] = { status: 'A' };
-        });
-
-        students.forEach(student => {
-            student.attendance = attendanceMap[student.roll_no] || {};
-        });
-
-        const dates = [];
-        for (let i = 0; i < 7; i++) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            dates.push(d.toISOString().split('T')[0]);
-        }
-        dates.reverse();
-
-        res.json({ students, dates });
-
-    } catch (error) {
-        console.error('Error fetching student data:', error);
-        res.status(500).json({ message: 'Failed to fetch student data.' });
-    } finally {
-        client.release();
-    }
-});
-
-
-// 3. Submit New Attendance Record
-// NEW, CORRECTED FUNCTION
+// NEW, CORRECTED FUNCTION for Composite Key
 app.post('/api/attendance/remove', async (req, res) => {
     const { date, time_slot, roll_no, division } = req.body;
     const client = await pool.connect();
@@ -119,22 +71,22 @@ app.post('/api/attendance/remove', async (req, res) => {
         }
         const lectureId = lectureRes.rows[0].id;
 
-        // Using parseInt() here to fix the bug
         const studentRollNoInt = parseInt(roll_no, 10);
 
+        // THE QUERY IS NOW MORE SPECIFIC, IT ALSO CHECKS THE DIVISION
         const deleteRes = await client.query(
-            'DELETE FROM attendance_records WHERE lecture_id = $1 AND student_roll_no = $2',
-            [lectureId, studentRollNoInt] // Use the integer version
+            'DELETE FROM attendance_records WHERE lecture_id = $1 AND student_roll_no = $2 AND division = $3',
+            [lectureId, studentRollNoInt, division]
         );
 
         await client.query(
-            `UPDATE lectures SET absent_roll_nos = array_remove(absent_roll_nos, $1) WHERE id = $2`,
-            [studentRollNoInt, lectureId] // Use the integer version
+            `UPDATE lectures SET absent_roll_nos = array_remove(abs_roll_nos, $1) WHERE id = $2`,
+            [studentRollNoInt, lectureId]
         );
 
         if (deleteRes.rowCount > 0) {
             await client.query('COMMIT');
-            res.json({ message: `Absence for Roll No ${studentRollNoInt} on ${date} has been removed.` });
+            res.json({ message: `Absence for Roll No ${studentRollNoInt} in Div ${division} on ${date} has been removed.` });
         } else {
             await client.query('ROLLBACK');
             res.status(404).json({ message: 'Student was not marked absent for this lecture.' });
