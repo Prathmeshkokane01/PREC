@@ -53,34 +53,134 @@ app.post('/api/auth/hod', (req, res) => {
 });
 
 
-// 2. Get Student Data for Student View
-// NEW, CORRECTED FUNCTION for Composite Key
+// 2. Get Student Data for Student View  <- THIS ENTIRE SECTION WAS MISSING
+app.get('/api/students/:division', async (req, res) => {
+    const { division } = req.params;
+    const client = await pool.connect();
+    try {
+        const studentRes = await client.query('SELECT roll_no, name FROM students WHERE division = $1 ORDER BY roll_no', [division]);
+        const students = studentRes.rows;
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        
+        const attendanceRes = await client.query(
+            'SELECT student_roll_no, date, status FROM attendance_records WHERE division = $1 AND date >= $2',
+            [division, sevenDaysAgo]
+        );
+
+        const attendanceMap = {};
+        attendanceRes.rows.forEach(row => {
+            if (!attendanceMap[row.student_roll_no]) {
+                attendanceMap[row.student_roll_no] = {};
+            }
+            attendanceMap[row.student_roll_no][new Date(row.date).toISOString().split('T')[0]] = { status: 'A' };
+        });
+
+        students.forEach(student => {
+            student.attendance = attendanceMap[student.roll_no] || {};
+        });
+
+        const dates = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+        }
+        dates.reverse();
+
+        res.json({ students, dates });
+
+    } catch (error) {
+        console.error('Error fetching student data:', error);
+        res.status(500).json({ message: 'Failed to fetch student data.' });
+    } finally {
+        client.release();
+    }
+});
+
+// 3. Submit New Attendance Record
+app.post('/api/attendance', async (req, res) => {
+    const { date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos } = req.body;
+    const absentRollNosAsInt = absent_roll_nos.map(r => parseInt(r, 10));
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const lectureInsertQuery = `
+            INSERT INTO lectures (date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;
+        `;
+        const lectureRes = await client.query(lectureInsertQuery, [date, division, subject, topic, teacher_name, time_slot, type, absentRollNosAsInt]);
+        const lectureId = lectureRes.rows[0].id;
+        for (const roll_no of absentRollNosAsInt) {
+            const absentInsertQuery = `
+                INSERT INTO attendance_records (lecture_id, student_roll_no, division, date, status)
+                VALUES ($1, $2, $3, $4, 'A');
+            `;
+            await client.query(absentInsertQuery, [lectureId, roll_no, division, date]);
+        }
+        await client.query('COMMIT');
+        res.status(201).json({ message: 'Attendance submitted successfully!' });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error submitting attendance:', error);
+        res.status(500).json({ message: 'Failed to submit attendance. Check if roll numbers are valid.' });
+    } finally {
+        client.release();
+    }
+});
+
+// 4. Get All Attendance for HOD view
+app.get('/api/attendance', async (req, res) => {
+    let { division, date } = req.query;
+    let query = 'SELECT * FROM lectures';
+    const params = [];
+
+    if (division && division !== 'ALL' || date) {
+        query += ' WHERE ';
+        let conditions = [];
+        if (division && division !== 'ALL') {
+            params.push(division);
+            conditions.push(`division = $${params.length}`);
+        }
+        if (date) {
+            params.push(date);
+            conditions.push(`date = $${params.length}`);
+        }
+        query += conditions.join(' AND ');
+    }
+    query += ' ORDER BY date DESC, time_slot ASC';
+    try {
+        const { rows } = await pool.query(query, params);
+        res.json(rows);
+    } catch (error) {
+        console.error('Error fetching HOD data:', error);
+        res.status(500).json({ message: 'Failed to fetch attendance records.' });
+    }
+});
+
+// 5. Remove an Absence Record (for fine removal)
 app.post('/api/attendance/remove', async (req, res) => {
     const { date, time_slot, roll_no, division } = req.body;
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-
         const lectureRes = await client.query(
             'SELECT id FROM lectures WHERE date = $1 AND time_slot = $2 AND division = $3',
             [date, time_slot, division]
         );
-
         if (lectureRes.rows.length === 0) {
             return res.status(404).json({ message: 'No lecture found for the specified date, time, and division.' });
         }
         const lectureId = lectureRes.rows[0].id;
-
         const studentRollNoInt = parseInt(roll_no, 10);
 
-        // THE QUERY IS NOW MORE SPECIFIC, IT ALSO CHECKS THE DIVISION
         const deleteRes = await client.query(
             'DELETE FROM attendance_records WHERE lecture_id = $1 AND student_roll_no = $2 AND division = $3',
             [lectureId, studentRollNoInt, division]
         );
-
         await client.query(
-            `UPDATE lectures SET absent_roll_nos = array_remove(abs_roll_nos, $1) WHERE id = $2`,
+            `UPDATE lectures SET absent_roll_nos = array_remove(absent_roll_nos, $1) WHERE id = $2`,
             [studentRollNoInt, lectureId]
         );
 
@@ -100,82 +200,9 @@ app.post('/api/attendance/remove', async (req, res) => {
     }
 });
 
-// 4. Get All Attendance for HOD view
-app.get('/api/attendance', async (req, res) => {
-    let { division, date } = req.query;
-    let query = 'SELECT * FROM lectures';
-    const params = [];
-
-    if(division && division !== 'ALL' || date) {
-        query += ' WHERE ';
-        let conditions = [];
-        if(division && division !== 'ALL') {
-            params.push(division);
-            conditions.push(`division = $${params.length}`);
-        }
-        if(date) {
-            params.push(date);
-            conditions.push(`date = $${params.length}`);
-        }
-        query += conditions.join(' AND ');
-    }
-
-    query += ' ORDER BY date DESC, time_slot ASC';
-    
-    try {
-        const { rows } = await pool.query(query, params);
-        res.json(rows);
-    } catch (error) {
-        console.error('Error fetching HOD data:', error);
-        res.status(500).json({ message: 'Failed to fetch attendance records.' });
-    }
-});
-
-
-// 5. Remove an Absence Record (for fine removal)
-// NEW, CORRECTED FUNCTION
-app.post('/api/attendance', async (req, res) => {
-    const { date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos } = req.body;
-
-    // FIX: Convert array of string roll numbers to array of integers
-    const absentRollNosAsInt = absent_roll_nos.map(r => parseInt(r, 10));
-
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN'); // Start transaction
-
-        // Insert the main lecture record
-        const lectureInsertQuery = `
-            INSERT INTO lectures (date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;
-        `;
-        // Use the new integer array here
-        const lectureRes = await client.query(lectureInsertQuery, [date, division, subject, topic, teacher_name, time_slot, type, absentRollNosAsInt]);
-        const lectureId = lectureRes.rows[0].id;
-
-        // Mark students as absent
-        // Loop through the new integer array here as well
-        for (const roll_no of absentRollNosAsInt) {
-            const absentInsertQuery = `
-                INSERT INTO attendance_records (lecture_id, student_roll_no, division, date, status)
-                VALUES ($1, $2, $3, $4, 'A');
-            `;
-            await client.query(absentInsertQuery, [lectureId, roll_no, division, date]);
-        }
-
-        await client.query('COMMIT'); // Commit transaction
-        res.status(201).json({ message: 'Attendance submitted successfully!' });
-    } catch (error) {
-        await client.query('ROLLBACK'); // Rollback on error
-        console.error('Error submitting attendance:', error);
-        res.status(500).json({ message: 'Failed to submit attendance. Check if roll numbers are valid.' });
-    } finally {
-        client.release();
-    }
-});
 // 6. Delete a specific Lecture Record
 app.delete('/api/lectures/:id', async (req, res) => {
-    const { id } = req.params; // Get the lecture ID from the URL
+    const { id } = req.params;
     try {
         await pool.query('DELETE FROM lectures WHERE id = $1', [id]);
         res.status(200).json({ message: 'Lecture record and all associated absences have been deleted.' });
