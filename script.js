@@ -31,9 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const studentLoginForm = document.getElementById('student-login-form');
     const studentRegForm = document.getElementById('student-reg-form');
     const studentDashboardView = document.getElementById('student-dashboard-view');
-    const studentPublicView = document.getElementById('student-db-wrapper');
+    const studentPublicViewWrapper = document.getElementById('student-db-wrapper');
     const regStudentDiv = document.getElementById('reg-student-div');
     const regStudentRollNo = document.getElementById('reg-student-rollno');
+    const studentLogoutBtn = document.getElementById('student-logout-btn');
     
     // Student Table (Public and LoggedIn)
     const viewDivA_Btn = document.getElementById('view-div-a');
@@ -129,11 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const tabs = container.querySelectorAll('.dashboard-tab');
         const contents = container.parentElement.querySelectorAll('.dashboard-content');
         
-        container.addEventListener('click', (e) => {
-            if (e.target.classList.contains('dashboard-tab')) {
-                const targetId = e.target.dataset.target;
-                tabs.forEach(tab => tab.classList.remove('active'));
-                e.target.classList.add('active');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const targetId = e.currentTarget.dataset.target;
+                tabs.forEach(t => t.classList.remove('active'));
+                e.currentTarget.classList.add('active');
                 contents.forEach(content => {
                     if (content.id === targetId) {
                         content.classList.remove('hidden');
@@ -141,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         content.classList.add('hidden');
                     }
                 });
-            }
+            });
         });
     }
     setupTabs('#teacher-dashboard-tabs');
@@ -229,60 +230,42 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) { /* Handled */ }
     });
-    // CORRECTED VERSION
-const fetchPendingStudents = async () => {
-    if (!pendingStudentsContainer) return;
-    try {
-        const students = await apiFetch('/students/pending');
-        pendingStudentsContainer.innerHTML = ''; // Clear old list
-        if (!students || students.length === 0) {
-            pendingStudentsContainer.innerHTML = '<p>No pending student verifications.</p>';
-            return;
+
+    const fetchPendingStudents = async () => {
+        if (!pendingStudentsContainer) return;
+        try {
+            const students = await apiFetch('/students/pending');
+            pendingStudentsContainer.innerHTML = '';
+            if (!students || students.length === 0) {
+                pendingStudentsContainer.innerHTML = '<p>No pending student verifications.</p>';
+                return;
+            }
+            const list = document.createElement('ul');
+            students.forEach(student => {
+                const item = document.createElement('li');
+                item.innerHTML = `<span><strong>${student.name}</strong> (Div: ${student.division}, Roll: ${student.roll_no})</span> <button class="verify-student-btn" data-id="${student.id}">Verify</button>`;
+                list.appendChild(item);
+            });
+            pendingStudentsContainer.appendChild(list);
+        } catch (error) { 
+            pendingStudentsContainer.innerHTML = '<p>Could not load pending students.</p>';
         }
-        const list = document.createElement('ul');
-        students.forEach(student => {
-            const item = document.createElement('li');
-            // The verify button now stores both division and roll_no
-            item.innerHTML = `
-                <span>
-                    <strong>${student.name}</strong> (Div: ${student.division}, Roll: ${student.roll_no})
-                </span> 
-                <button class="verify-student-btn" data-division="${student.division}" data-roll-no="${student.roll_no}">Verify</button>
-            `;
-            list.appendChild(item);
-        });
-        pendingStudentsContainer.appendChild(list);
-    } catch (error) { 
-        pendingStudentsContainer.innerHTML = '<p>Could not load pending students.</p>';
-    }
-};
-  // CORRECTED VERSION
-teacherFormView.addEventListener('click', async (e) => {
-    // This part handles the dashboard tabs
-    if (e.target.classList.contains('dashboard-tab')) {
-        if (e.target.dataset.target === 'pending-student-wrapper') {
+    };
+    
+    teacherFormView.addEventListener('click', (e) => {
+        if(e.target.classList.contains('dashboard-tab') && e.target.dataset.target === 'pending-student-wrapper') {
             fetchPendingStudents();
         }
-    }
-
-    // This part handles the verify button clicks
-    if (e.target.classList.contains('verify-student-btn')) {
-        const division = e.target.dataset.division;
-        const roll_no = e.target.dataset.rollNo;
-
-        try {
-            const result = await apiFetch(`/students/verify`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ division, roll_no })
+        if (e.target.classList.contains('verify-student-btn')) {
+            const studentId = e.target.dataset.id;
+            apiFetch(`/students/verify/${studentId}`, { method: 'PUT' }).then(result => {
+                if (result) {
+                    showMessage(result.message);
+                    fetchPendingStudents();
+                }
             });
-            if (result) {
-                showMessage(result.message);
-                fetchPendingStudents(); // Refresh the list after verifying
-            }
-        } catch (error) { /* Handled */ }
-    }
-});
+        }
+    });
     
     // --- STUDENT SECTION LOGIC ---
     regStudentDiv.addEventListener('change', () => {
@@ -321,13 +304,16 @@ teacherFormView.addEventListener('click', async (e) => {
                 showMessage(result.message);
                 studentSection.querySelector('.dashboard-tabs').classList.add('hidden');
                 studentSection.querySelector('h2').classList.add('hidden');
-                studentLoginWrapper.classList.add('hidden');
-                studentRegWrapper.classList.add('hidden');
-                studentPublicView.classList.add('hidden');
+                studentAuthContainer.classList.add('hidden');
+                studentPublicViewWrapper.classList.add('hidden');
                 studentDashboardView.classList.remove('hidden');
                 fetchAndDisplayStudentData(result.division, result.roll_no);
             }
         } catch (error) { /* Handled */ }
+    });
+
+    studentLogoutBtn.addEventListener('click', () => {
+        window.location.reload();
     });
 
     const fetchAndDisplayStudentData = async (division, loggedInRollNo = null) => {
@@ -344,7 +330,7 @@ teacherFormView.addEventListener('click', async (e) => {
             
             data.students.forEach(student => {
                 let isHighlighted = student.roll_no == loggedInRollNo && student.division == division;
-                if (!isPublicView && !isHighlighted) return;
+                if (!isPublicView && loggedInRollNo && !isHighlighted) return;
 
                 let totalAbsences = 0;
                 let rowHTML = `<tr class="${isHighlighted ? 'highlighted' : ''}"><td>${student.roll_no}</td><td>${student.name}</td>`;
@@ -392,7 +378,6 @@ teacherFormView.addEventListener('click', async (e) => {
             records.forEach(rec => {
                 tableHTML += `<tr><td>${new Date(rec.date).toLocaleDateString('en-GB')}</td><td>${rec.time_slot}</td><td>${rec.division}</td><td>${rec.subject}</td><td>${rec.topic}</td><td>${rec.teacher_name}</td><td>${rec.type}</td><td>${rec.absent_roll_nos.join(', ')}</td><td><button class="delete-btn" data-lecture-id="${rec.id}">Delete</button></td></tr>`;
             });
-            tableHTML += `</tbody></table>`;
             hodTableContainer.innerHTML = tableHTML;
         } catch (error) {
              hodTableContainer.innerHTML = `<p>Could not load attendance records.</p>`;

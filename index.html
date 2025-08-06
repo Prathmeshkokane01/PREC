@@ -133,38 +133,39 @@
                 <button class="dashboard-tab" data-target="student-reg-wrapper">Registration</button>
                 <button class="dashboard-tab" data-target="student-db-wrapper">Attendance Database</button>
             </div>
-            
-            <div id="student-login-wrapper" class="dashboard-content">
-                <h3>Student Login</h3>
-                <form id="student-login-form">
-                    <input type="tel" id="student-phone" placeholder="Enter your Phone Number" required>
-                    <div class="password-wrapper">
-                        <input type="password" id="student-password" placeholder="Enter Password" required>
-                        <span class="toggle-password">👁️</span>
-                    </div>
-                    <button type="submit">Login</button>
-                </form>
-            </div>
-            
-            <div id="student-reg-wrapper" class="dashboard-content hidden">
-                <h3>Student Registration</h3>
-                <p class="form-note">Create your student profile. It will be active after a teacher verifies it.</p>
-                <form id="student-reg-form">
-                    <label>Full Name:</label>
-                    <input type="text" id="reg-student-name" placeholder="Enter your name exactly as per records" required>
-                    <label>Division:</label>
-                    <select id="reg-student-div" required> <option value="">-- Select Division --</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                    <label>Roll Number:</label>
-                    <select id="reg-student-rollno" required disabled> <option value="">-- Select Division First --</option> </select>
-                    <label>Phone Number:</label>
-                    <input type="tel" id="reg-student-phone" placeholder="Enter 10-digit mobile number" required>
-                    <label>Create a Password:</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="reg-student-password" placeholder="Create a strong password" required>
-                        <span class="toggle-password">👁️</span>
-                    </div>
-                    <button type="submit">Create Account</button>
-                </form>
+            <div class="auth-container">
+                <div id="student-login-wrapper" class="dashboard-content">
+                    <h3>Student Login</h3>
+                    <form id="student-login-form">
+                        <input type="tel" id="student-phone" placeholder="Enter your Phone Number" required>
+                        <div class="password-wrapper">
+                            <input type="password" id="student-password" placeholder="Enter Password" required>
+                            <span class="toggle-password">👁️</span>
+                        </div>
+                        <button type="submit">Login</button>
+                    </form>
+                </div>
+                
+                <div id="student-reg-wrapper" class="dashboard-content hidden">
+                    <h3>Student Registration</h3>
+                    <p class="form-note">Create your student profile. It will be active after a teacher verifies it.</p>
+                    <form id="student-reg-form">
+                        <label>Full Name:</label>
+                        <input type="text" id="reg-student-name" placeholder="Enter your name exactly as per records" required>
+                        <label>Division:</label>
+                        <select id="reg-student-div" required> <option value="">-- Select Division --</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
+                        <label>Roll Number:</label>
+                        <select id="reg-student-rollno" required disabled> <option value="">-- Select Division First --</option> </select>
+                        <label>Phone Number:</label>
+                        <input type="tel" id="reg-student-phone" placeholder="Enter 10-digit mobile number" required>
+                        <label>Create a Password:</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="reg-student-password" placeholder="Create a strong password" required>
+                            <span class="toggle-password">👁️</span>
+                        </div>
+                        <button type="submit">Create Account</button>
+                    </form>
+                </div>
             </div>
 
             <div id="student-db-wrapper" class="dashboard-content hidden">
@@ -178,7 +179,10 @@
             </div>
 
             <div id="student-dashboard-view" class="hidden">
-                <h2 id="student-dashboard-heading">Your Attendance Report</h2>
+                <div class="dashboard-header">
+                    <h2 id="student-dashboard-heading">Your Attendance Report</h2>
+                    <button id="student-logout-btn">Logout</button>
+                </div>
                 <div id="student-table-container-loggedin"></div>
             </div>
         </section>

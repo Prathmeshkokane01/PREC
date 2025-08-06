@@ -57,6 +57,9 @@ button:hover { background-color: var(--primary-hover); }
 .div-selector, .filters { margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
 #hod-download-pdf { background-color: var(--accent-color-success); margin-left: auto; justify-self: end; }
 #hod-download-pdf:hover { background-color: #218838; }
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+#student-logout-btn { background-color: var(--college-red); font-size: 0.9rem; padding: 0.5rem 1rem; justify-self: end; }
+#student-logout-btn:hover { background-color: #9a0007; }
 table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 0.9rem; }
 th, td { border: 1px solid var(--border-color); padding: 0.9rem 1rem; text-align: left; vertical-align: middle; }
 thead th { background-color: #E9ECEF; font-weight: 600; font-size: 0.95rem; }
