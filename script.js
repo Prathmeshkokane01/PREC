@@ -90,10 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
             throw error;
         }
     };
-
     // --- NAVIGATION LOGIC ---
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
+            // NEW FIX: When we navigate AWAY from the student tab, clear its data
+            // This ensures the data is always fresh when the user comes back.
+            if (e.target.id !== 'nav-student') {
+                if (studentTableContainerPublic) studentTableContainerPublic.innerHTML = '';
+                if (studentTableHeadingPublic) studentTableHeadingPublic.textContent = '';
+            }
+
+            // Original navigation logic
             navButtons.forEach(btn => btn.classList.remove('active'));
             sections.forEach(sec => sec.classList.add('hidden'));
             e.target.classList.add('active');
@@ -101,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(sectionId).classList.remove('hidden');
         });
     });
+    
 
     // --- PASSWORD TOGGLE LOGIC ---
     togglePasswordIcons.forEach(icon => {
@@ -407,13 +415,14 @@ document.addEventListener('DOMContentLoaded', () => {
             teacherStatusContainer.appendChild(list);
         } catch(error) { /* Handled */ }
     };
-    
     hodLoginBtn.addEventListener('click', async () => {
         const accessCode = hodAccessCodeInput.value;
         try {
             const result = await apiFetch('/auth/hod', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessCode }) });
             if(result) {
-                hodLoginView.classList.add('hidden');
+                // THIS IS THE FIX: This is a more direct way to hide the login form.
+                hodLoginView.style.display = 'none'; 
+                
                 hodDataView.classList.remove('hidden');
                 showMessage('HOD Login successful!');
                 fetchPendingTeachers();
