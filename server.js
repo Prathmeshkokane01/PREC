@@ -40,10 +40,7 @@ app.post('/api/teachers/signup', async (req, res) => {
     const { name, email, password } = req.body;
     try {
         const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-        await pool.query(
-            'INSERT INTO teachers (name, email, password_hash) VALUES ($1, $2, $3)',
-            [name, email, passwordHash]
-        );
+        await pool.query('INSERT INTO teachers (name, email, password_hash) VALUES ($1, $2, $3)', [name, email, passwordHash]);
         res.status(201).json({ message: 'Signup successful! Please wait for HOD verification.' });
     } catch (error) {
         console.error('Signup error:', error);
@@ -56,7 +53,6 @@ app.post('/api/teachers/login', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM teachers WHERE email = $1', [email]);
         const teacher = result.rows[0];
-
         if (!teacher) {
             return res.status(401).json({ message: 'Invalid email or password.' });
         }
@@ -99,11 +95,8 @@ app.get('/api/teachers/status', async (req, res) => {
     try {
         const result = await pool.query("SELECT name, last_login FROM teachers WHERE status = 'verified'");
         const activeThreshold = 5 * 60 * 1000; // 5 minutes
-        
         const statuses = result.rows.map(teacher => {
-            if (!teacher.last_login) {
-                return { name: teacher.name, isActive: false };
-            }
+            if (!teacher.last_login) { return { name: teacher.name, isActive: false }; }
             const lastLoginTime = new Date(teacher.last_login).getTime();
             const now = new Date().getTime();
             const isActive = (now - lastLoginTime) < activeThreshold;
@@ -119,10 +112,7 @@ app.get('/api/teachers/status', async (req, res) => {
 app.post('/api/students/register', async (req, res) => {
     const { name, division, roll_no, phone_no, password } = req.body;
     try {
-        const studentCheck = await pool.query(
-            'SELECT * FROM students WHERE division = $1 AND roll_no = $2',
-            [division, roll_no]
-        );
+        const studentCheck = await pool.query('SELECT * FROM students WHERE division = $1 AND roll_no = $2', [division, roll_no]);
         if (studentCheck.rows.length === 0) {
             return res.status(404).json({ message: 'Student profile not found. Please contact your administrator.' });
         }
@@ -130,10 +120,7 @@ app.post('/api/students/register', async (req, res) => {
             return res.status(400).json({ message: 'This student profile has already been registered.' });
         }
         const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-        await pool.query(
-            'UPDATE students SET phone_no = $1, password_hash = $2, name = $3 WHERE division = $4 AND roll_no = $5',
-            [phone_no, passwordHash, name, division, roll_no]
-        );
+        await pool.query('UPDATE students SET phone_no = $1, password_hash = $2, name = $3 WHERE division = $4 AND roll_no = $5', [phone_no, passwordHash, name, division, roll_no]);
         res.status(201).json({ message: 'Registration successful! You can now log in.' });
     } catch (error) {
         console.error('Student registration error:', error);
@@ -146,20 +133,13 @@ app.post('/api/students/login', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM students WHERE phone_no = $1', [phone_no]);
         const student = result.rows[0];
-        if (!student) {
+        if (!student || !student.password_hash) {
             return res.status(401).json({ message: 'Invalid phone number or password.' });
-        }
-        if (!student.password_hash) {
-            return res.status(401).json({ message: 'Account not fully registered. Please complete registration.' });
         }
         const isMatch = await bcrypt.compare(password, student.password_hash);
         if (isMatch) {
             await pool.query('UPDATE students SET last_login = NOW() WHERE phone_no = $1', [phone_no]);
-            res.status(200).json({ 
-                message: 'Login successful!',
-                division: student.division,
-                roll_no: student.roll_no
-            });
+            res.status(200).json({ message: 'Login successful!', division: student.division, roll_no: student.roll_no });
         } else {
             res.status(401).json({ message: 'Invalid phone number or password.' });
         }

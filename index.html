@@ -35,7 +35,10 @@
                     <h2>Teacher Login</h2>
                     <form id="teacher-login-form">
                         <input type="email" id="teacher-email" placeholder="Enter your Email" required>
-                        <input type="password" id="teacher-password" placeholder="Enter Password" required>
+                        <div class="password-wrapper">
+                            <input type="password" id="teacher-password" placeholder="Enter Password" required>
+                            <span class="toggle-password">👁️</span>
+                        </div>
                         <button type="submit">Login</button>
                     </form>
                 </div>
@@ -44,7 +47,10 @@
                     <form id="teacher-signup-form">
                         <input type="text" id="signup-name" placeholder="Full Name" required>
                         <input type="email" id="signup-email" placeholder="Email Address" required>
-                        <input type="password" id="signup-password" placeholder="Create a Password" required>
+                        <div class="password-wrapper">
+                            <input type="password" id="signup-password" placeholder="Create a Password" required>
+                            <span class="toggle-password">👁️</span>
+                        </div>
                         <button type="submit">Sign Up</button>
                     </form>
                 </div>
@@ -59,20 +65,20 @@
                 <div id="submit-attendance-wrapper" class="dashboard-content">
                     <h3>Submit Daily Attendance</h3>
                     <form id="attendance-form">
-                        <label for="att-date-display">Date:</label>
+                        <label>Date:</label>
                         <input type="text" id="att-date-display" readonly>
                         <input type="hidden" id="att-date" name="date">
-                        <label for="att-div">Division:</label>
+                        <label>Division:</label>
                         <select id="att-div" name="division"> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                        <label for="att-subject">Subject Name:</label>
+                        <label>Subject Name:</label>
                         <input type="text" id="att-subject" name="subject" required>
-                        <label for="att-topic">Topic Covered:</label>
+                        <label>Topic Covered:</label>
                         <input type="text" id="att-topic" name="topic" required>
-                        <label for="att-teacher">Teacher Name:</label>
+                        <label>Teacher Name:</label>
                         <input type="text" id="att-teacher" name="teacher_name" required readonly>
-                        <label for="att-type">Type:</label>
+                        <label>Type:</label>
                         <select id="att-type" name="type"> <option value="Theory">Theory</option> <option value="Practical">Practical</option> </select>
-                        <label for="att-time">Time Slot:</label>
+                        <label>Time Slot:</label>
                         <select id="att-time" name="time_slot">
                             <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
                             <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
@@ -124,7 +130,10 @@
                     <h2>Student Login</h2>
                     <form id="student-login-form">
                         <input type="tel" id="student-phone" placeholder="Enter your Phone Number" required>
-                        <input type="password" id="student-password" placeholder="Enter Password" required>
+                        <div class="password-wrapper">
+                           <input type="password" id="student-password" placeholder="Enter Password" required>
+                           <span class="toggle-password">👁️</span>
+                        </div>
                         <button type="submit">Login</button>
                     </form>
                 </div>
@@ -132,16 +141,19 @@
                     <h2>Student Registration</h2>
                     <p class="form-note">Note: You can only register if your profile has been created by the college.</p>
                     <form id="student-reg-form">
-                        <label for="reg-student-name">Full Name:</label>
+                        <label>Full Name:</label>
                         <input type="text" id="reg-student-name" placeholder="Enter your name exactly as per records" required>
-                        <label for="reg-student-div">Division:</label>
+                        <label>Division:</label>
                         <select id="reg-student-div" required> <option value="">-- Select Division --</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                        <label for="reg-student-rollno">Roll Number:</label>
+                        <label>Roll Number:</label>
                         <select id="reg-student-rollno" required disabled> <option value="">-- Select Division First --</option> </select>
-                        <label for="reg-student-phone">Phone Number:</label>
+                        <label>Phone Number:</label>
                         <input type="tel" id="reg-student-phone" placeholder="Enter 10-digit mobile number" required>
-                        <label for="reg-student-password">Create a Password:</label>
-                        <input type="password" id="reg-student-password" placeholder="Create a strong password" required>
+                        <label>Create a Password:</label>
+                         <div class="password-wrapper">
+                            <input type="password" id="reg-student-password" placeholder="Create a strong password" required>
+                            <span class="toggle-password">👁️</span>
+                        </div>
                         <button type="submit">Create Account</button>
                     </form>
                 </div>
@@ -172,9 +184,9 @@
                 </div>
                 <h3>Daily Attendance Records</h3>
                 <div class="filters">
-                    <label for="hod-filter-div">Filter by Division:</label>
+                    <label>Filter by Division:</label>
                     <select id="hod-filter-div"> <option value="ALL">All Divisions</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                    <label for="hod-filter-date">Filter by Date:</label>
+                    <label>Filter by Date:</label>
                     <input type="date" id="hod-filter-date">
                     <button id="hod-filter-btn">Apply Filter</button>
                     <button id="hod-download-pdf">Download as PDF</button>

@@ -1,4 +1,4 @@
-/* --- FINAL STYLESHEET V3 --- */
+/* --- FINAL STYLESHEET V4 --- */
 :root { --primary-color: #0D47A1; --primary-hover: #0B3A82; --college-red: #B71C1C; --header-bg: #1565C0; --bg-color: #F5F7FA; --surface-color: #FFFFFF; --border-color: #DEE2E6; --text-color: #343A40; --text-light-color: #6c757d; --accent-color-success: #28a745; --accent-color-danger: #dc3545; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; color: var(--text-color); line-height: 1.7; }
@@ -28,7 +28,11 @@ button:hover { background-color: var(--primary-hover); }
 .auth-tab { flex-grow: 1; background: none; border: none; padding: 1rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--text-light-color); border-bottom: 3px solid transparent; }
 .auth-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
 #teacher-login-form, #teacher-signup-form, #student-login-form, #student-reg-form { display: flex; flex-direction: column; gap: 1rem; }
+#teacher-login-view button, #hod-login-view button { margin-top: 1rem; }
 #teacher-login-form button, #teacher-signup-form button, #student-login-form button, #student-reg-form button { margin-top: 0.5rem; justify-self: center; }
+.password-wrapper { position: relative; display: flex; align-items: center; }
+.password-wrapper input { width: 100%; padding-right: 45px; }
+.toggle-password { position: absolute; right: 15px; cursor: pointer; user-select: none; color: var(--text-light-color); font-style: normal; }
 .dashboard-tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem; }
 .dashboard-tab { padding: 0.75rem 1.5rem; border: none; background: none; cursor: pointer; font-weight: 600; font-size: 1rem; color: var(--text-light-color); border-bottom: 3px solid transparent; transition: all 0.3s ease; margin-bottom: -2px; }
 .dashboard-tab:hover { color: var(--primary-color); }
@@ -48,7 +52,7 @@ button:hover { background-color: var(--primary-hover); }
 .status-dot.active { background-color: #28a745; }
 .status-dot.inactive { background-color: #ced4da; }
 #fine-section-container { margin-top: 3.5rem; padding-top: 2rem; border-top: 2px dashed var(--border-color); }
-#fine-section-container h3 { border: none; }
+#fine-section-container h3, .remove-fine-form h3 { border: none; padding-bottom: 0; }
 .remove-fine-form { display: grid; gap: 1.5rem; }
 .div-selector, .filters { margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
 #hod-download-pdf { background-color: var(--accent-color-success); margin-left: auto; justify-self: end; }
@@ -66,6 +70,7 @@ td.present { text-align: center; color: #2E7D32; }
 #message-container.success { background-color: var(--accent-color-success); }
 #message-container.error { background-color: var(--accent-color-danger); }
 .form-note { font-size: 0.9rem; color: var(--text-light-color); text-align: center; margin-top: -1rem; margin-bottom: 1rem; }
+tr.highlighted { background-color: #FFF9C4 !important; }
 @media (max-width: 768px) {
     header h1 { font-size: 1.4rem; }
     header p { font-size: 0.9rem; }
