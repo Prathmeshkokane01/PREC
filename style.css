@@ -398,3 +398,42 @@ section {
 .delete-btn:hover {
     background: #a80000; /* Darker red on hover */
 }
+/* --- ROLL NUMBER GRID STYLES --- */
+
+.roll-number-grid-container {
+    display: grid;
+    /* This creates a responsive grid of columns, each at least 45px wide */
+    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 250px; /* Gives the grid a max height with a scrollbar if needed */
+    overflow-y: auto;
+}
+
+.roll-number-item {
+    height: 45px;
+    width: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; /* This makes it a circle */
+    border: 2px solid var(--border-color);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.roll-number-item:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* This is the style for a selected/absent student */
+.roll-number-item.absent {
+    background-color: var(--accent-color-danger);
+    color: white;
+    border-color: var(--accent-color-danger);
+    transform: scale(1.05);
+}

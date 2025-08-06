@@ -7,6 +7,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const sections = document.querySelectorAll('main > section');
     const messageContainer = document.getElementById('message-container');
 
+    // --- FUNCTION TO GENERATE ROLL NUMBER GRID ---
+function generateRollNumberGrid(totalRollNumbers = 71) {
+    const gridContainer = document.getElementById('roll-number-grid');
+    if (!gridContainer) return; // Make sure the container exists
+    gridContainer.innerHTML = ''; // Clear any existing grid items
+
+    for (let i = 1; i <= totalRollNumbers; i++) {
+        const rollItem = document.createElement('div');
+        rollItem.classList.add('roll-number-item');
+        rollItem.textContent = i;
+        rollItem.dataset.rollNo = i; // Store the roll number in a data attribute
+        gridContainer.appendChild(rollItem);
+    }
+}
+
     // Teacher Section
     const teacherLoginView = document.getElementById('teacher-login-view');
     const teacherFormView = document.getElementById('teacher-form-view');
@@ -115,29 +130,56 @@ document.addEventListener('DOMContentLoaded', () => {
             teacherLoginView.classList.add('hidden');
             teacherFormView.classList.remove('hidden');
             showMessage('Login successful!');
+            generateRollNumberGrid(); // <-- CALL THE NEW FUNCTION HERE
         } catch (error) { /* Error handled by apiFetch */ }
     });
+    // --- EVENT LISTENER FOR ROLL NUMBER CLICKS ---
+const gridContainer = document.getElementById('roll-number-grid');
+if (gridContainer) {
+    gridContainer.addEventListener('click', (e) => {
+        // Check if a roll number item was clicked
+        if (e.target.classList.contains('roll-number-item')) {
+            // Toggle the 'absent' class to select/deselect
+            e.target.classList.toggle('absent');
+        }
+    });
+}
 
     // Attendance Form Submission
-    attendanceForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(attendanceForm);
-        const data = Object.fromEntries(formData.entries());
-        data.absent_roll_nos = data.absent_roll_nos.split(',').map(n => n.trim()).filter(Boolean);
+    // Replace your entire old attendance submission function with this one
+attendanceForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(attendanceForm);
+    const data = Object.fromEntries(formData.entries());
 
-        try {
-            const result = await apiFetch('/attendance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            showMessage(result.message);
-            attendanceForm.reset();
-            // Re-populate the date fields after reset
-            dateDisplayInput.value = `${day}-${month}-${year}`;
-            dateInput.value = today.toLocaleDateString('en-CA');
-        } catch (error) { /* Error handled */ }
+    // NEW LOGIC: Get absent roll numbers from the grid
+    const absentRollNos = [];
+    const selectedItems = document.querySelectorAll('#roll-number-grid .roll-number-item.absent');
+    selectedItems.forEach(item => {
+        absentRollNos.push(item.dataset.rollNo);
     });
+    data.absent_roll_nos = absentRollNos; // Overwrite the form data with our selected array
+
+    try {
+        const result = await apiFetch('/attendance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        showMessage(result.message);
+        attendanceForm.reset();
+
+        // NEW LOGIC: Clear the selected state from the grid after submission
+        selectedItems.forEach(item => item.classList.remove('absent'));
+
+        // Re-populate the date fields after reset
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        document.getElementById('att-date-display').value = `${day}-${month}-${year}`;
+        document.getElementById('att-date').value = today.toLocaleDateString('en-CA');
+    } catch (error) { /* Error handled */ }
+});
     
     // --- STUDENT SECTION LOGIC ---
     const fetchAndDisplayStudentData = async (division) => {
