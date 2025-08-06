@@ -229,42 +229,60 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) { /* Handled */ }
     });
-
-    const fetchPendingStudents = async () => {
-        if (!pendingStudentsContainer) return;
-        try {
-            const students = await apiFetch('/students/pending');
-            pendingStudentsContainer.innerHTML = '';
-            if (!students || students.length === 0) {
-                pendingStudentsContainer.innerHTML = '<p>No pending student verifications.</p>';
-                return;
-            }
-            const list = document.createElement('ul');
-            students.forEach(student => {
-                const item = document.createElement('li');
-                item.innerHTML = `<span><strong>${student.name}</strong> (Div: ${student.division}, Roll: ${student.roll_no})</span> <button class="verify-student-btn" data-student-id="${student.id}">Verify</button>`;
-                list.appendChild(item);
-            });
-            pendingStudentsContainer.appendChild(list);
-        } catch (error) { 
-            pendingStudentsContainer.innerHTML = '<p>Could not load pending students.</p>';
+    // CORRECTED VERSION
+const fetchPendingStudents = async () => {
+    if (!pendingStudentsContainer) return;
+    try {
+        const students = await apiFetch('/students/pending');
+        pendingStudentsContainer.innerHTML = ''; // Clear old list
+        if (!students || students.length === 0) {
+            pendingStudentsContainer.innerHTML = '<p>No pending student verifications.</p>';
+            return;
         }
-    };
-    
-    teacherFormView.addEventListener('click', (e) => {
-        if(e.target.classList.contains('dashboard-tab') && e.target.dataset.target === 'pending-student-wrapper') {
+        const list = document.createElement('ul');
+        students.forEach(student => {
+            const item = document.createElement('li');
+            // The verify button now stores both division and roll_no
+            item.innerHTML = `
+                <span>
+                    <strong>${student.name}</strong> (Div: ${student.division}, Roll: ${student.roll_no})
+                </span> 
+                <button class="verify-student-btn" data-division="${student.division}" data-roll-no="${student.roll_no}">Verify</button>
+            `;
+            list.appendChild(item);
+        });
+        pendingStudentsContainer.appendChild(list);
+    } catch (error) { 
+        pendingStudentsContainer.innerHTML = '<p>Could not load pending students.</p>';
+    }
+};
+  // CORRECTED VERSION
+teacherFormView.addEventListener('click', async (e) => {
+    // This part handles the dashboard tabs
+    if (e.target.classList.contains('dashboard-tab')) {
+        if (e.target.dataset.target === 'pending-student-wrapper') {
             fetchPendingStudents();
         }
-        if (e.target.classList.contains('verify-student-btn')) {
-            const studentId = e.target.dataset.studentId;
-            apiFetch(`/students/verify/${studentId}`, { method: 'PUT' }).then(result => {
-                if (result) {
-                    showMessage(result.message);
-                    fetchPendingStudents();
-                }
+    }
+
+    // This part handles the verify button clicks
+    if (e.target.classList.contains('verify-student-btn')) {
+        const division = e.target.dataset.division;
+        const roll_no = e.target.dataset.rollNo;
+
+        try {
+            const result = await apiFetch(`/students/verify`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ division, roll_no })
             });
-        }
-    });
+            if (result) {
+                showMessage(result.message);
+                fetchPendingStudents(); // Refresh the list after verifying
+            }
+        } catch (error) { /* Handled */ }
+    }
+});
     
     // --- STUDENT SECTION LOGIC ---
     regStudentDiv.addEventListener('change', () => {

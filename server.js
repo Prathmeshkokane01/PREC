@@ -158,21 +158,29 @@ app.post('/api/students/login', async (req, res) => {
 });
 
 // --- NEW ENDPOINTS FOR TEACHER TO VERIFY STUDENTS ---
+// --- NEW ENDPOINTS FOR TEACHER TO VERIFY STUDENTS ---
+
+// CORRECTED VERSION
 app.get('/api/students/pending', async (req, res) => {
     try {
-        const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' ORDER BY id ASC");
+        // This query now correctly selects division and roll_no, and doesn't look for a missing 'id' column.
+        const result = await pool.query("SELECT name, division, roll_no FROM students WHERE status = 'pending' ORDER BY division, roll_no ASC");
         res.json(result.rows);
     } catch (error) {
+        console.error("Error fetching pending students:", error);
         res.status(500).json({ message: 'Failed to fetch pending students.' });
     }
 });
 
-app.put('/api/students/verify/:id', async (req, res) => {
-    const { id } = req.params;
+// CORRECTED VERSION
+app.put('/api/students/verify', async (req, res) => {
+    const { division, roll_no } = req.body; // We get the data from the request body now
     try {
-        await pool.query("UPDATE students SET status = 'verified' WHERE id = $1", [id]);
+        // This query now uses the correct composite key (division and roll_no) to update the status.
+        await pool.query("UPDATE students SET status = 'verified' WHERE division = $1 AND roll_no = $2", [division, roll_no]);
         res.status(200).json({ message: 'Student verified successfully.' });
     } catch (error) {
+        console.error("Error verifying student:", error);
         res.status(500).json({ message: 'Failed to verify student.' });
     }
 });
