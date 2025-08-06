@@ -1,46 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
-    const API_BASE_URL = ''; // This will be your Render URL later, leave empty for local dev
+    const API_BASE_URL = '';
     
     // --- DOM ELEMENTS ---
     const navButtons = document.querySelectorAll('.nav-button');
     const sections = document.querySelectorAll('main > section');
     const messageContainer = document.getElementById('message-container');
-
-    // --- FUNCTION TO GENERATE ROLL NUMBER GRID ---
-function generateRollNumberGrid(totalRollNumbers = 71) {
-    const gridContainer = document.getElementById('roll-number-grid');
-    if (!gridContainer) return; // Make sure the container exists
-    gridContainer.innerHTML = ''; // Clear any existing grid items
-
-    for (let i = 1; i <= totalRollNumbers; i++) {
-        const rollItem = document.createElement('div');
-        rollItem.classList.add('roll-number-item');
-        rollItem.textContent = i;
-        rollItem.dataset.rollNo = i; // Store the roll number in a data attribute
-        gridContainer.appendChild(rollItem);
-    }
-}
-
-    // Teacher Section
+    const authContainer = document.querySelector('.auth-container');
+    const showLoginTab = document.getElementById('show-login-tab');
+    const showSignupTab = document.getElementById('show-signup-tab');
     const teacherLoginView = document.getElementById('teacher-login-view');
+    const teacherSignupView = document.getElementById('teacher-signup-view');
+    const teacherLoginForm = document.getElementById('teacher-login-form');
+    const teacherSignupForm = document.getElementById('teacher-signup-form');
     const teacherFormView = document.getElementById('teacher-form-view');
-    const teacherLoginBtn = document.getElementById('teacher-login-btn');
-    const teacherEmailInput = document.getElementById('teacher-email');
-    const teacherAccessCodeInput = document.getElementById('teacher-access-code');
     const attendanceForm = document.getElementById('attendance-form');
     const dateInput = document.getElementById('att-date');
-    const dateDisplayInput = document.getElementById('att-date-display'); // This is the visible one
+    const dateDisplayInput = document.getElementById('att-date-display');
     const typeSelect = document.getElementById('att-type');
     const timeSelect = document.getElementById('att-time');
-
-    // Student Section
+    const gridContainer = document.getElementById('roll-number-grid');
     const viewDivA_Btn = document.getElementById('view-div-a');
     const viewDivB_Btn = document.getElementById('view-div-b');
     const studentTableContainer = document.getElementById('student-table-container');
     const studentTableHeading = document.getElementById('student-table-heading');
-    
-    // HOD Section
     const hodLoginView = document.getElementById('hod-login-view');
     const hodDataView = document.getElementById('hod-data-view');
     const hodLoginBtn = document.getElementById('hod-login-btn');
@@ -48,35 +31,27 @@ function generateRollNumberGrid(totalRollNumbers = 71) {
     const hodFilterBtn = document.getElementById('hod-filter-btn');
     const hodDownloadPdfBtn = document.getElementById('hod-download-pdf');
     const hodTableContainer = document.getElementById('hod-table-container');
-
-    // Fine Removal Forms (they share some IDs, which is okay as only one is visible at a time)
+    const pendingTeachersContainer = document.getElementById('pending-teachers-container');
+    const teacherStatusContainer = document.getElementById('teacher-status-container');
     const removeFineForms = document.querySelectorAll('#remove-fine-form');
+    let statusInterval;
 
-
-    // --- INITIALIZATION CODE (runs after all elements are found) ---
-
-    // Auto-set date with dual format
-    const today = new Date();
-    // Format for the user (DD-MM-YYYY)
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-    const year = today.getFullYear();
-    if (dateDisplayInput) { // Check if the element exists before setting its value
+    // --- INITIALIZATION ---
+    if (dateDisplayInput && dateInput) {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
         dateDisplayInput.value = `${day}-${month}-${year}`;
-    }
-    // Format for the database (YYYY-MM-DD)
-    if (dateInput) { // Check if the element exists
         dateInput.value = today.toLocaleDateString('en-CA');
     }
 
     // --- HELPER FUNCTIONS ---
     const showMessage = (text, type = 'success') => {
         messageContainer.textContent = text;
-        messageContainer.className = type;
+        messageContainer.className = `message ${type}`;
         messageContainer.style.display = 'block';
-        setTimeout(() => {
-            messageContainer.style.display = 'none';
-        }, 4000);
+        setTimeout(() => { messageContainer.style.display = 'none'; }, 4000);
     };
 
     const apiFetch = async (endpoint, options = {}) => {
@@ -86,7 +61,9 @@ function generateRollNumberGrid(totalRollNumbers = 71) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'An error occurred.');
             }
-            return await response.json();
+            if (response.status !== 204) { // No Content
+                return await response.json();
+            }
         } catch (error) {
             showMessage(error.message, 'error');
             console.error('API Fetch Error:', error);
@@ -99,7 +76,6 @@ function generateRollNumberGrid(totalRollNumbers = 71) {
         button.addEventListener('click', () => {
             navButtons.forEach(btn => btn.classList.remove('active'));
             sections.forEach(sec => sec.classList.add('hidden'));
-
             button.classList.add('active');
             const sectionId = button.id.replace('nav-', '') + '-section';
             document.getElementById(sectionId).classList.remove('hidden');
@@ -107,92 +83,123 @@ function generateRollNumberGrid(totalRollNumbers = 71) {
     });
 
     // --- TEACHER SECTION LOGIC ---
-    // Auto-select time for practicals
-    typeSelect.addEventListener('change', () => {
-        if (typeSelect.value === 'Practical') {
-            timeSelect.value = '11.30am to 1.20pm';
-            timeSelect.disabled = true;
-        } else {
-            timeSelect.disabled = false;
-        }
+    showLoginTab.addEventListener('click', () => {
+        teacherSignupView.classList.add('hidden');
+        teacherLoginView.classList.remove('hidden');
+        showSignupTab.classList.remove('active');
+        showLoginTab.classList.add('active');
     });
 
-    // Teacher Login
-    teacherLoginBtn.addEventListener('click', async () => {
-        const email = teacherEmailInput.value;
-        const accessCode = teacherAccessCodeInput.value;
+    showSignupTab.addEventListener('click', () => {
+        teacherLoginView.classList.add('hidden');
+        teacherSignupView.classList.remove('hidden');
+        showLoginTab.classList.remove('active');
+        showSignupTab.classList.add('active');
+    });
+
+    teacherSignupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            name: document.getElementById('signup-name').value,
+            email: document.getElementById('signup-email').value,
+            password: document.getElementById('signup-password').value,
+        };
         try {
-            await apiFetch('/auth/teacher', {
+            const result = await apiFetch('/teachers/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, accessCode })
+                body: JSON.stringify(data),
             });
-            teacherLoginView.classList.add('hidden');
+            showMessage(result.message);
+            teacherSignupForm.reset();
+            showLoginTab.click();
+        } catch (error) { /* Handled */ }
+    });
+
+    teacherLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            email: document.getElementById('teacher-email').value,
+            password: document.getElementById('teacher-password').value,
+        };
+        try {
+            await apiFetch('/teachers/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            authContainer.classList.add('hidden');
             teacherFormView.classList.remove('hidden');
             showMessage('Login successful!');
-            generateRollNumberGrid(); // <-- CALL THE NEW FUNCTION HERE
-        } catch (error) { /* Error handled by apiFetch */ }
+            generateRollNumberGrid();
+        } catch (error) { /* Handled */ }
     });
-    // --- EVENT LISTENER FOR ROLL NUMBER CLICKS ---
-const gridContainer = document.getElementById('roll-number-grid');
-if (gridContainer) {
-    gridContainer.addEventListener('click', (e) => {
-        // Check if a roll number item was clicked
-        if (e.target.classList.contains('roll-number-item')) {
-            // Toggle the 'absent' class to select/deselect
-            e.target.classList.toggle('absent');
+    
+    function generateRollNumberGrid(totalRollNumbers = 71) {
+        if (!gridContainer) return;
+        gridContainer.innerHTML = '';
+        for (let i = 1; i <= totalRollNumbers; i++) {
+            const rollItem = document.createElement('div');
+            rollItem.classList.add('roll-number-item');
+            rollItem.textContent = i;
+            rollItem.dataset.rollNo = i;
+            gridContainer.appendChild(rollItem);
         }
-    });
-}
+    }
 
-    // Attendance Form Submission
-    // Replace your entire old attendance submission function with this one
-attendanceForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(attendanceForm);
-    const data = Object.fromEntries(formData.entries());
-
-    // NEW LOGIC: Get absent roll numbers from the grid
-    const absentRollNos = [];
-    const selectedItems = document.querySelectorAll('#roll-number-grid .roll-number-item.absent');
-    selectedItems.forEach(item => {
-        absentRollNos.push(item.dataset.rollNo);
-    });
-    data.absent_roll_nos = absentRollNos; // Overwrite the form data with our selected array
-
-    try {
-        const result = await apiFetch('/attendance', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+    if (gridContainer) {
+        gridContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('roll-number-item')) {
+                e.target.classList.toggle('absent');
+            }
         });
-        showMessage(result.message);
-        attendanceForm.reset();
+    }
 
-        // NEW LOGIC: Clear the selected state from the grid after submission
-        selectedItems.forEach(item => item.classList.remove('absent'));
+    if(typeSelect){
+        typeSelect.addEventListener('change', () => {
+            if (typeSelect.value === 'Practical') {
+                timeSelect.value = '11.30am to 1.20pm';
+                timeSelect.disabled = true;
+            } else {
+                timeSelect.disabled = false;
+            }
+        });
+    }
 
-        // Re-populate the date fields after reset
-        const today = new Date();
-        const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        document.getElementById('att-date-display').value = `${day}-${month}-${year}`;
-        document.getElementById('att-date').value = today.toLocaleDateString('en-CA');
-    } catch (error) { /* Error handled */ }
-});
+    attendanceForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(attendanceForm);
+        const data = Object.fromEntries(formData.entries());
+        const absentRollNos = [];
+        const selectedItems = document.querySelectorAll('#roll-number-grid .roll-number-item.absent');
+        selectedItems.forEach(item => { absentRollNos.push(item.dataset.rollNo); });
+        data.absent_roll_nos = absentRollNos;
+        try {
+            const result = await apiFetch('/attendance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            showMessage(result.message);
+            attendanceForm.reset();
+            selectedItems.forEach(item => item.classList.remove('absent'));
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            dateDisplayInput.value = `${day}-${month}-${year}`;
+            dateInput.value = today.toLocaleDateString('en-CA');
+        } catch (error) { /* Handled */ }
+    });
     
     // --- STUDENT SECTION LOGIC ---
     const fetchAndDisplayStudentData = async (division) => {
         try {
             const data = await apiFetch(`/students/${division}`);
             studentTableHeading.textContent = `Displaying Data for Division ${division}`;
-            
             let tableHTML = `<table><thead><tr><th>Roll No</th><th>Student Name</th>`;
-            data.dates.forEach(date => {
-                tableHTML += `<th>${new Date(date).toLocaleDateString('en-GB')}</th>`;
-            });
+            data.dates.forEach(date => { tableHTML += `<th>${new Date(date).toLocaleDateString('en-GB')}</th>`; });
             tableHTML += `<th>Total Fine</th></tr></thead><tbody>`;
-
             data.students.forEach(student => {
                 let totalAbsences = 0;
                 tableHTML += `<tr><td>${student.roll_no}</td><td>${student.name}</td>`;
@@ -208,7 +215,6 @@ attendanceForm.addEventListener('submit', async (e) => {
                 const totalFine = totalAbsences * 100;
                 tableHTML += `<td class="fine">₹${totalFine}</td></tr>`;
             });
-
             tableHTML += `</tbody></table>`;
             studentTableContainer.innerHTML = tableHTML;
         } catch (error) {
@@ -220,81 +226,40 @@ attendanceForm.addEventListener('submit', async (e) => {
     viewDivB_Btn.addEventListener('click', () => fetchAndDisplayStudentData('B'));
 
     // --- HOD SECTION LOGIC ---
-    // HOD Login
-    hodLoginBtn.addEventListener('click', async () => {
-        const accessCode = hodAccessCodeInput.value;
+    const fetchAndDisplayHodData = async () => {
+        const div = document.getElementById('hod-filter-div').value;
+        const date = document.getElementById('hod-filter-date').value;
+        let query = `?`;
+        if (div && div !== 'ALL') query += `division=${div}&`;
+        if (date) query += `date=${date}`;
         try {
-             await apiFetch('/auth/hod', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accessCode })
+            const records = await apiFetch(`/attendance${query}`);
+            let tableHTML = `<table><thead><tr><th>Date</th><th>Time</th><th>Div</th><th>Subject</th><th>Topic</th><th>Teacher</th><th>Type</th><th>Absentees (Roll No)</th><th>Actions</th></tr></thead><tbody>`;
+            records.forEach(rec => {
+                tableHTML += `<tr><td>${new Date(rec.date).toLocaleDateString('en-GB')}</td><td>${rec.time_slot}</td><td>${rec.division}</td><td>${rec.subject}</td><td>${rec.topic}</td><td>${rec.teacher_name}</td><td>${rec.type}</td><td>${rec.absent_roll_nos.join(', ')}</td><td><button class="delete-btn" data-lecture-id="${rec.id}">Delete</button></td></tr>`;
             });
-            hodLoginView.classList.add('hidden');
-            hodDataView.classList.remove('hidden');
-            showMessage('HOD Login successful!');
-            fetchAndDisplayHodData();
-        } catch(error) { /* Error handled */ }
-    });
-    // Replace the entire old function with this new one
-const fetchAndDisplayHodData = async () => {
-    const div = document.getElementById('hod-filter-div').value;
-    const date = document.getElementById('hod-filter-date').value;
-
-    let query = `?`;
-    if (div && div !== 'ALL') query += `division=${div}&`;
-    if (date) query += `date=${date}`;
-
-    try {
-        const records = await apiFetch(`/attendance${query}`);
-        // ADDED "Actions" HEADER
-        let tableHTML = `<table><thead><tr><th>Date</th><th>Time</th><th>Div</th><th>Subject</th><th>Topic</th><th>Teacher</th><th>Type</th><th>Absentees (Roll No)</th><th>Actions</th></tr></thead><tbody>`;
-        records.forEach(rec => {
-            tableHTML += `
-                <tr>
-                    <td>${new Date(rec.date).toLocaleDateString('en-GB')}</td>
-                    <td>${rec.time_slot}</td>
-                    <td>${rec.division}</td>
-                    <td>${rec.subject}</td>
-                    <td>${rec.topic}</td>
-                    <td>${rec.teacher_name}</td>
-                    <td>${rec.type}</td>
-                    <td>${rec.absent_roll_nos.join(', ')}</td>
-                    <td>
-                        <button class="delete-btn" data-lecture-id="${rec.id}">Delete</button>
-                    </td>
-                </tr>
-            `;
-        });
-        tableHTML += `</tbody></table>`;
-        hodTableContainer.innerHTML = tableHTML;
-    } catch (error) {
-         hodTableContainer.innerHTML = `<p>Could not load attendance records.</p>`;
-    }
-};
+            tableHTML += `</tbody></table>`;
+            hodTableContainer.innerHTML = tableHTML;
+        } catch (error) {
+             hodTableContainer.innerHTML = `<p>Could not load attendance records.</p>`;
+        }
+    };
 
     hodFilterBtn.addEventListener('click', fetchAndDisplayHodData);
-    // NEW CODE BLOCK - Listens for clicks on any delete button in the HOD table
-hodTableContainer.addEventListener('click', async (e) => {
-    // Check if a delete button was the specific element clicked
-    if (e.target && e.target.classList.contains('delete-btn')) {
-        const lectureId = e.target.dataset.lectureId;
 
-        // Show a confirmation popup before deleting
-        if (confirm('Are you sure you want to permanently delete this entire lecture record? This action cannot be undone.')) {
-            try {
-                const result = await apiFetch(`/lectures/${lectureId}`, {
-                    method: 'DELETE'
-                });
-                showMessage(result.message); // Show success message
-                fetchAndDisplayHodData(); // Refresh the table to show the row is gone
-            } catch (error) {
-                // The apiFetch function will automatically show the error message
+    hodTableContainer.addEventListener('click', async (e) => {
+        if (e.target && e.target.classList.contains('delete-btn')) {
+            const lectureId = e.target.dataset.lectureId;
+            if (confirm('Are you sure you want to permanently delete this entire lecture record?')) {
+                try {
+                    const result = await apiFetch(`/lectures/${lectureId}`, { method: 'DELETE' });
+                    showMessage(result.message);
+                    fetchAndDisplayHodData();
+                } catch (error) { /* Handled */ }
             }
         }
-    }
-});
+    });
 
-    // PDF Download
     hodDownloadPdfBtn.addEventListener('click', () => {
         const printContent = hodTableContainer.innerHTML;
         const originalContent = document.body.innerHTML;
@@ -303,19 +268,83 @@ hodTableContainer.addEventListener('click', async (e) => {
         window.location.reload();
     });
 
+    const fetchPendingTeachers = async () => {
+        try {
+            const teachers = await apiFetch('/teachers/pending');
+            pendingTeachersContainer.innerHTML = '';
+            if (teachers.length === 0) {
+                pendingTeachersContainer.innerHTML = '<p>No pending verifications.</p>';
+                return;
+            }
+            const list = document.createElement('ul');
+            teachers.forEach(teacher => {
+                const item = document.createElement('li');
+                item.innerHTML = `<span>${teacher.name} (${teacher.email})</span> <button class="verify-btn" data-teacher-id="${teacher.id}">Verify</button>`;
+                list.appendChild(item);
+            });
+            pendingTeachersContainer.appendChild(list);
+        } catch (error) { /* Handled */ }
+    };
+
+    pendingTeachersContainer.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('verify-btn')) {
+            const teacherId = e.target.dataset.teacherId;
+            try {
+                const result = await apiFetch(`/teachers/verify/${teacherId}`, { method: 'PUT' });
+                showMessage(result.message);
+                fetchPendingTeachers();
+            } catch (error) { /* Handled */ }
+        }
+    });
+
+    const fetchTeacherStatus = async () => {
+        try {
+            const statuses = await apiFetch('/teachers/status');
+            teacherStatusContainer.innerHTML = '';
+            if (statuses.length === 0) {
+                teacherStatusContainer.innerHTML = '<p>No verified teachers found.</p>';
+                return;
+            }
+            const list = document.createElement('ul');
+            statuses.forEach(teacher => {
+                const item = document.createElement('li');
+                const statusClass = teacher.isActive ? 'active' : 'inactive';
+                item.innerHTML = `<span class="status-dot ${statusClass}"></span> ${teacher.name}`;
+                list.appendChild(item);
+            });
+            teacherStatusContainer.appendChild(list);
+        } catch(error) { /* Handled */ }
+    };
+    
+    hodLoginBtn.addEventListener('click', async () => {
+        const accessCode = hodAccessCodeInput.value;
+        try {
+            await apiFetch('/auth/hod', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accessCode })
+            });
+            hodLoginView.classList.add('hidden');
+            hodDataView.classList.remove('hidden');
+            showMessage('HOD Login successful!');
+            fetchPendingTeachers();
+            fetchTeacherStatus();
+            fetchAndDisplayHodData();
+            if(statusInterval) clearInterval(statusInterval);
+            statusInterval = setInterval(fetchTeacherStatus, 15000);
+        } catch(error) { /* Handled */ }
+    });
+
     // --- FINE REMOVAL LOGIC ---
-    // This now applies to both forms (Teacher and HOD)
     removeFineForms.forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            // Get data from the specific form that was submitted
             const data = {
-                date: e.target.querySelector('#fine-date').value,
-                time_slot: e.target.querySelector('#fine-time').value,
-                roll_no: e.target.querySelector('#fine-rollno').value,
-                division: e.target.querySelector('#fine-div').value
+                date: e.target.querySelector('.fine-date').value,
+                time_slot: e.target.querySelector('.fine-time').value,
+                roll_no: e.target.querySelector('.fine-rollno').value,
+                division: e.target.querySelector('.fine-div').value
             };
-
             try {
                 const result = await apiFetch('/attendance/remove', {
                      method: 'POST',
@@ -324,7 +353,7 @@ hodTableContainer.addEventListener('click', async (e) => {
                 });
                 showMessage(result.message);
                 form.reset();
-            } catch(error) { /* Error handled */ }
+            } catch(error) { /* Handled */ }
         });
     });
 

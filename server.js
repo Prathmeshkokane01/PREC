@@ -2,26 +2,21 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
-require('dotenv').config(); // To read .env file
+const bcrypt = require('bcrypt'); // For password hashing
+require('dotenv').config();
 
 // --- CONFIGURATION ---
 const app = express();
 const PORT = process.env.PORT || 3000;
-const FINE_PER_ABSENCE = 100;
+const SALT_ROUNDS = 10; // For bcrypt password hashing
 
-// --- PRE-DEFINED ACCESS CODES & EMAILS (as requested) ---
-const TEACHER_CREDENTIALS = [
-    { email: 'prathmeshkokane2511@gmail.com', accessCode: '1230' },
-    { email: 'teacher2@pravara.edu', accessCode: 'pass456' }
-];
+// --- PRE-DEFINED ACCESS CODES & EMAILS ---
 const HOD_ACCESS_CODE = 'hod123';
 
 // --- DATABASE CONNECTION ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
 });
 
 // --- MIDDLEWARE ---
@@ -29,20 +24,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
-
 // --- API ENDPOINTS (ROUTES) ---
 
-// 1. Authentication Routes
-app.post('/api/auth/teacher', (req, res) => {
-    const { email, accessCode } = req.body;
-    const isValid = TEACHER_CREDENTIALS.some(cred => cred.email === email && cred.accessCode === accessCode);
-    if (isValid) {
-        res.status(200).json({ message: 'Teacher authenticated successfully.' });
-    } else {
-        res.status(401).json({ message: 'Invalid email or access code.' });
-    }
-});
-
+// 1. HOD Authentication
 app.post('/api/auth/hod', (req, res) => {
     const { accessCode } = req.body;
     if (accessCode === HOD_ACCESS_CODE) {
@@ -52,35 +36,102 @@ app.post('/api/auth/hod', (req, res) => {
     }
 });
 
+// 2. Teacher Signup
+app.post('/api/teachers/signup', async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+        const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+        await pool.query('INSERT INTO teachers (name, email, password_hash) VALUES ($1, $2, $3)', [name, email, passwordHash]);
+        res.status(201).json({ message: 'Signup successful! Please wait for HOD verification.' });
+    } catch (error) {
+        console.error('Signup error:', error);
+        res.status(500).json({ message: 'An error occurred. The email might already be in use.' });
+    }
+});
 
-// 2. Get Student Data for Student View  <- THIS ENTIRE SECTION WAS MISSING
+// 3. Teacher Login
+app.post('/api/teachers/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const result = await pool.query('SELECT * FROM teachers WHERE email = $1', [email]);
+        const teacher = result.rows[0];
+        if (!teacher) {
+            return res.status(401).json({ message: 'Invalid email or password.' });
+        }
+        if (teacher.status === 'pending') {
+            return res.status(403).json({ message: 'Your account has not been verified by the HOD. Please contact the HOD.' });
+        }
+        const isMatch = await bcrypt.compare(password, teacher.password_hash);
+        if (isMatch) {
+            await pool.query('UPDATE teachers SET last_login = NOW() WHERE id = $1', [teacher.id]);
+            res.status(200).json({ message: 'Login successful!' });
+        } else {
+            res.status(401).json({ message: 'Invalid email or password.' });
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'An error occurred during login.' });
+    }
+});
+
+// 4. Get Pending Teachers (for HOD)
+app.get('/api/teachers/pending', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT id, name, email FROM teachers WHERE status = 'pending' ORDER BY id ASC");
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch pending teachers.' });
+    }
+});
+
+// 5. Verify a Teacher (for HOD)
+app.put('/api/teachers/verify/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query("UPDATE teachers SET status = 'verified' WHERE id = $1", [id]);
+        res.status(200).json({ message: 'Teacher verified successfully.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to verify teacher.' });
+    }
+});
+
+// 6. Get Teacher Status (for HOD live view)
+app.get('/api/teachers/status', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT name, last_login FROM teachers WHERE status = 'verified'");
+        const activeThreshold = 5 * 60 * 1000; // 5 minutes
+        const statuses = result.rows.map(teacher => {
+            const lastLoginTime = new Date(teacher.last_login).getTime();
+            const now = new Date().getTime();
+            const isActive = (now - lastLoginTime) < activeThreshold;
+            return { name: teacher.name, isActive };
+        });
+        res.json(statuses);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch teacher statuses.' });
+    }
+});
+
+// 7. Get Student Data for Student View
 app.get('/api/students/:division', async (req, res) => {
     const { division } = req.params;
     const client = await pool.connect();
     try {
         const studentRes = await client.query('SELECT roll_no, name FROM students WHERE division = $1 ORDER BY roll_no', [division]);
         const students = studentRes.rows;
-
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-        
-        const attendanceRes = await client.query(
-            'SELECT student_roll_no, date, status FROM attendance_records WHERE division = $1 AND date >= $2',
-            [division, sevenDaysAgo]
-        );
-
+        const attendanceRes = await client.query('SELECT student_roll_no, division, date, status FROM attendance_records WHERE division = $1 AND date >= $2', [division, sevenDaysAgo]);
         const attendanceMap = {};
         attendanceRes.rows.forEach(row => {
-            if (!attendanceMap[row.student_roll_no]) {
-                attendanceMap[row.student_roll_no] = {};
-            }
-            attendanceMap[row.student_roll_no][new Date(row.date).toISOString().split('T')[0]] = { status: 'A' };
+            const key = `${row.division}-${row.student_roll_no}`;
+            if (!attendanceMap[key]) { attendanceMap[key] = {}; }
+            attendanceMap[key][new Date(row.date).toISOString().split('T')[0]] = { status: 'A' };
         });
-
         students.forEach(student => {
-            student.attendance = attendanceMap[student.roll_no] || {};
+            const key = `${student.division}-${student.roll_no}`;
+            student.attendance = attendanceMap[key] || {};
         });
-
         const dates = [];
         for (let i = 0; i < 7; i++) {
             const d = new Date();
@@ -88,9 +139,7 @@ app.get('/api/students/:division', async (req, res) => {
             dates.push(d.toISOString().split('T')[0]);
         }
         dates.reverse();
-
         res.json({ students, dates });
-
     } catch (error) {
         console.error('Error fetching student data:', error);
         res.status(500).json({ message: 'Failed to fetch student data.' });
@@ -99,24 +148,18 @@ app.get('/api/students/:division', async (req, res) => {
     }
 });
 
-// 3. Submit New Attendance Record
+// 8. Submit New Attendance Record
 app.post('/api/attendance', async (req, res) => {
     const { date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos } = req.body;
     const absentRollNosAsInt = absent_roll_nos.map(r => parseInt(r, 10));
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        const lectureInsertQuery = `
-            INSERT INTO lectures (date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;
-        `;
+        const lectureInsertQuery = `INSERT INTO lectures (date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;`;
         const lectureRes = await client.query(lectureInsertQuery, [date, division, subject, topic, teacher_name, time_slot, type, absentRollNosAsInt]);
         const lectureId = lectureRes.rows[0].id;
         for (const roll_no of absentRollNosAsInt) {
-            const absentInsertQuery = `
-                INSERT INTO attendance_records (lecture_id, student_roll_no, division, date, status)
-                VALUES ($1, $2, $3, $4, 'A');
-            `;
+            const absentInsertQuery = `INSERT INTO attendance_records (lecture_id, student_roll_no, division, date, status) VALUES ($1, $2, $3, $4, 'A');`;
             await client.query(absentInsertQuery, [lectureId, roll_no, division, date]);
         }
         await client.query('COMMIT');
@@ -130,12 +173,11 @@ app.post('/api/attendance', async (req, res) => {
     }
 });
 
-// 4. Get All Attendance for HOD view
+// 9. Get All Attendance for HOD view
 app.get('/api/attendance', async (req, res) => {
     let { division, date } = req.query;
     let query = 'SELECT * FROM lectures';
     const params = [];
-
     if (division && division !== 'ALL' || date) {
         query += ' WHERE ';
         let conditions = [];
@@ -159,31 +201,20 @@ app.get('/api/attendance', async (req, res) => {
     }
 });
 
-// 5. Remove an Absence Record (for fine removal)
+// 10. Remove an Absence Record
 app.post('/api/attendance/remove', async (req, res) => {
     const { date, time_slot, roll_no, division } = req.body;
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        const lectureRes = await client.query(
-            'SELECT id FROM lectures WHERE date = $1 AND time_slot = $2 AND division = $3',
-            [date, time_slot, division]
-        );
+        const lectureRes = await client.query('SELECT id FROM lectures WHERE date = $1 AND time_slot = $2 AND division = $3', [date, time_slot, division]);
         if (lectureRes.rows.length === 0) {
             return res.status(404).json({ message: 'No lecture found for the specified date, time, and division.' });
         }
         const lectureId = lectureRes.rows[0].id;
         const studentRollNoInt = parseInt(roll_no, 10);
-
-        const deleteRes = await client.query(
-            'DELETE FROM attendance_records WHERE lecture_id = $1 AND student_roll_no = $2 AND division = $3',
-            [lectureId, studentRollNoInt, division]
-        );
-        await client.query(
-            `UPDATE lectures SET absent_roll_nos = array_remove(absent_roll_nos, $1) WHERE id = $2`,
-            [studentRollNoInt, lectureId]
-        );
-
+        const deleteRes = await client.query('DELETE FROM attendance_records WHERE lecture_id = $1 AND student_roll_no = $2 AND division = $3', [lectureId, studentRollNoInt, division]);
+        await client.query(`UPDATE lectures SET absent_roll_nos = array_remove(absent_roll_nos, $1) WHERE id = $2`, [studentRollNoInt, lectureId]);
         if (deleteRes.rowCount > 0) {
             await client.query('COMMIT');
             res.json({ message: `Absence for Roll No ${studentRollNoInt} in Div ${division} on ${date} has been removed.` });
@@ -200,7 +231,7 @@ app.post('/api/attendance/remove', async (req, res) => {
     }
 });
 
-// 6. Delete a specific Lecture Record
+// 11. Delete a specific Lecture Record
 app.delete('/api/lectures/:id', async (req, res) => {
     const { id } = req.params;
     try {
