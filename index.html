@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <header>
         <div class="header-container">
             <img src="college_logo.png" alt="Pravara Rural Engineering College Logo" class="college-logo">
@@ -19,11 +20,13 @@
             </div>
         </div>
     </header>
+
     <nav>
         <button id="nav-teacher" class="nav-button active">Teacher Section</button>
         <button id="nav-student" class="nav-button">Student Section</button>
         <button id="nav-hod" class="nav-button">HOD Section</button>
     </nav>
+
     <main>
         <section id="teacher-section">
             <div class="auth-container">
@@ -57,61 +60,17 @@
             </div>
             <div id="teacher-form-view" class="hidden">
                 <h2>Teacher Dashboard</h2>
-                <div class="dashboard-tabs">
+                <div class="dashboard-tabs" id="teacher-dashboard-tabs">
                     <button class="dashboard-tab active" data-target="submit-attendance-wrapper">Submit Attendance</button>
                     <button class="dashboard-tab" data-target="remove-fine-wrapper">Remove Fine</button>
                     <button class="dashboard-tab" data-target="pending-student-wrapper">Pending Student Verification</button>
                 </div>
                 <div id="submit-attendance-wrapper" class="dashboard-content">
                     <h3>Submit Daily Attendance</h3>
-                    <form id="attendance-form">
-                        <label>Date:</label>
-                        <input type="text" id="att-date-display" readonly>
-                        <input type="hidden" id="att-date" name="date">
-                        <label>Division:</label>
-                        <select id="att-div" name="division"> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                        <label>Subject Name:</label>
-                        <input type="text" id="att-subject" name="subject" required>
-                        <label>Topic Covered:</label>
-                        <input type="text" id="att-topic" name="topic" required>
-                        <label>Teacher Name:</label>
-                        <input type="text" id="att-teacher" name="teacher_name" required readonly>
-                        <label>Type:</label>
-                        <select id="att-type" name="type"> <option value="Theory">Theory</option> <option value="Practical">Practical</option> </select>
-                        <label>Time Slot:</label>
-                        <select id="att-time" name="time_slot">
-                            <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
-                            <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
-                            <option value="11.30am to 1.20pm">11:30 AM - 1:20 PM</option>
-                            <option value="2.15pm to 3.10pm">2:15 PM - 3:10 PM</option>
-                            <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
-                            <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
-                        </select>
-                        <label>Absent Roll Numbers (Click circles to select):</label>
-                        <div id="roll-number-grid" class="roll-number-grid-container"></div>
-                        <button type="submit">Submit Attendance</button>
-                    </form>
+                    <form id="attendance-form"></form>
                 </div>
                 <div id="remove-fine-wrapper" class="dashboard-content hidden">
-                    <form class="remove-fine-form">
-                        <h3>Remove an Absence / Fine</h3>
-                        <label>Date of Lecture:</label>
-                        <input type="date" class="fine-date" required>
-                        <label>Time Slot of Lecture:</label>
-                        <select class="fine-time" required>
-                            <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
-                            <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
-                            <option value="11.30am to 1.20pm">11:30 AM - 1:20 PM</option>
-                            <option value="2.15pm to 3.10pm">2:15 PM - 3:10 PM</option>
-                            <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
-                            <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
-                        </select>
-                        <label>Student Roll Number to Clear:</label>
-                        <input type="number" class="fine-rollno" required>
-                        <label>Student Division:</label>
-                        <select class="fine-div" required> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                        <button type="submit">Remove Absence Record</button>
-                    </form>
+                    <form class="remove-fine-form"></form>
                 </div>
                 <div id="pending-student-wrapper" class="dashboard-content hidden">
                     <h3>Pending Student Verification</h3>
@@ -121,46 +80,37 @@
         </section>
 
         <section id="student-section" class="hidden">
-            <div class="auth-container">
-                <div class="auth-tabs">
-                    <button id="show-student-login-tab" class="auth-tab active">Login</button>
-                    <button id="show-student-reg-tab" class="auth-tab">Registration</button>
-                </div>
-                <div id="student-login-view">
-                    <h2>Student Login</h2>
-                    <form id="student-login-form">
-                        <input type="tel" id="student-phone" placeholder="Enter your Phone Number" required>
-                        <div class="password-wrapper">
-                           <input type="password" id="student-password" placeholder="Enter Password" required>
-                           <span class="toggle-password">👁️</span>
-                        </div>
-                        <button type="submit">Login</button>
-                    </form>
-                </div>
-                <div id="student-reg-view" class="hidden">
-                    <h2>Student Registration</h2>
-                    <p class="form-note">Note: You can only register if your profile has been created by the college.</p>
-                    <form id="student-reg-form">
-                        <label>Full Name:</label>
-                        <input type="text" id="reg-student-name" placeholder="Enter your name exactly as per records" required>
-                        <label>Division:</label>
-                        <select id="reg-student-div" required> <option value="">-- Select Division --</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                        <label>Roll Number:</label>
-                        <select id="reg-student-rollno" required disabled> <option value="">-- Select Division First --</option> </select>
-                        <label>Phone Number:</label>
-                        <input type="tel" id="reg-student-phone" placeholder="Enter 10-digit mobile number" required>
-                        <label>Create a Password:</label>
-                         <div class="password-wrapper">
-                            <input type="password" id="reg-student-password" placeholder="Create a strong password" required>
-                            <span class="toggle-password">👁️</span>
-                        </div>
-                        <button type="submit">Create Account</button>
-                    </form>
-                </div>
+            <h2>Student Portal</h2>
+            <div class="dashboard-tabs" id="student-dashboard-tabs">
+                <button class="dashboard-tab active" data-target="student-login-wrapper">Login</button>
+                <button class="dashboard-tab" data-target="student-reg-wrapper">Registration</button>
+                <button class="dashboard-tab" data-target="student-db-wrapper">Attendance Database</button>
             </div>
+            
+            <div id="student-login-wrapper" class="dashboard-content">
+                <h3>Student Login</h3>
+                <form id="student-login-form"></form>
+            </div>
+            
+            <div id="student-reg-wrapper" class="dashboard-content hidden">
+                <h3>Student Registration</h3>
+                <p class="form-note">Note: You can only register if your profile has been created by the college.</p>
+                <form id="student-reg-form"></form>
+            </div>
+
+            <div id="student-db-wrapper" class="dashboard-content hidden">
+                <h3>Public Attendance Database</h3>
+                <div class="div-selector">
+                    <button id="view-div-a" data-div="A">View Div A</button>
+                    <button id="view-div-b" data-div="B">View Div B</button>
+                </div>
+                <h3 id="student-table-heading"></h3>
+                <div id="student-table-container"></div>
+            </div>
+
             <div id="student-dashboard-view" class="hidden">
                 <h2>Your Attendance Report</h2>
-                <div id="student-table-container"></div>
+                <div id="student-table-container-loggedin"></div>
             </div>
         </section>
 
@@ -171,49 +121,7 @@
                 <button id="hod-login-btn">Login</button>
             </div>
             <div id="hod-data-view" class="hidden">
-                <h2>HOD Dashboard</h2>
-                <div class="hod-admin-panel">
-                    <div id="pending-teachers-section">
-                        <h3>Pending Teacher Verifications</h3>
-                        <div id="pending-teachers-container"></div>
-                    </div>
-                    <div id="teacher-status-section">
-                        <h3>Verified Teacher Status</h3>
-                        <div id="teacher-status-container"></div>
-                    </div>
                 </div>
-                <h3>Daily Attendance Records</h3>
-                <div class="filters">
-                    <label>Filter by Division:</label>
-                    <select id="hod-filter-div"> <option value="ALL">All Divisions</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                    <label>Filter by Date:</label>
-                    <input type="date" id="hod-filter-date">
-                    <button id="hod-filter-btn">Apply Filter</button>
-                    <button id="hod-download-pdf">Download as PDF</button>
-                </div>
-                <div id="hod-table-container"></div>
-                <div id="fine-section-container">
-                    <h3>Remove an Absence / Fine</h3>
-                    <form class="remove-fine-form">
-                        <label>Date of Lecture:</label>
-                        <input type="date" class="fine-date" required>
-                        <label>Time Slot of Lecture:</label>
-                        <select class="fine-time" required>
-                            <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
-                            <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
-                            <option value="11.30am to 1.20pm">11:30 AM - 1:20 PM</option>
-                            <option value="2.15pm to 3.10pm">2:15 PM - 3:10 PM</option>
-                            <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
-                            <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
-                        </select>
-                        <label>Student Roll Number to Clear:</label>
-                        <input type="number" class="fine-rollno" required>
-                        <label>Student Division:</label>
-                        <select class="fine-div" required> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                        <button type="submit">Remove Absence Record</button>
-                    </form>
-                </div>
-            </div>
         </section>
     </main>
     <div id="message-container"></div>

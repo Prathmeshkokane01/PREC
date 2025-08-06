@@ -1,4 +1,4 @@
-/* --- FINAL STYLESHEET V4 --- */
+/* --- FINAL STYLESHEET V5 --- */
 :root { --primary-color: #0D47A1; --primary-hover: #0B3A82; --college-red: #B71C1C; --header-bg: #1565C0; --bg-color: #F5F7FA; --surface-color: #FFFFFF; --border-color: #DEE2E6; --text-color: #343A40; --text-light-color: #6c757d; --accent-color-success: #28a745; --accent-color-danger: #dc3545; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; color: var(--text-color); line-height: 1.7; }
