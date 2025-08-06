@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const gridContainer = document.getElementById('roll-number-grid');
     const teacherNameInput = document.getElementById('att-teacher');
 
-    // Student Auth & Dashboard
+    // Student Section & Auth
     const studentSection = document.getElementById('student-section');
-    const studentLoginView = document.getElementById('student-login-wrapper');
-    const studentRegView = document.getElementById('student-reg-wrapper');
+    const studentLoginWrapper = document.getElementById('student-login-wrapper');
+    const studentRegWrapper = document.getElementById('student-reg-wrapper');
     const studentLoginForm = document.getElementById('student-login-form');
     const studentRegForm = document.getElementById('student-reg-form');
     const studentDashboardView = document.getElementById('student-dashboard-view');
@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hodTableContainer = document.getElementById('hod-table-container');
     const pendingTeachersContainer = document.getElementById('pending-teachers-container');
     const teacherStatusContainer = document.getElementById('teacher-status-container');
+    const pendingStudentsContainer = document.getElementById('pending-students-container');
     const removeFineForms = document.querySelectorAll('.remove-fine-form');
     const togglePasswordIcons = document.querySelectorAll('.toggle-password');
     let statusInterval;
@@ -90,17 +91,14 @@ document.addEventListener('DOMContentLoaded', () => {
             throw error;
         }
     };
+
     // --- NAVIGATION LOGIC ---
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
-            // NEW FIX: When we navigate AWAY from the student tab, clear its data
-            // This ensures the data is always fresh when the user comes back.
             if (e.target.id !== 'nav-student') {
                 if (studentTableContainerPublic) studentTableContainerPublic.innerHTML = '';
                 if (studentTableHeadingPublic) studentTableHeadingPublic.textContent = '';
             }
-
-            // Original navigation logic
             navButtons.forEach(btn => btn.classList.remove('active'));
             sections.forEach(sec => sec.classList.add('hidden'));
             e.target.classList.add('active');
@@ -108,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(sectionId).classList.remove('hidden');
         });
     });
-    
 
     // --- PASSWORD TOGGLE LOGIC ---
     togglePasswordIcons.forEach(icon => {
@@ -125,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- GENERIC TAB SWITCHING LOGIC ---
-    function setupTabs(containerId, parentElement = document) {
-        const container = parentElement.querySelector(`#${containerId}`);
+    function setupTabs(containerSelector) {
+        const container = document.querySelector(containerSelector);
         if (!container) return;
         
         const tabs = container.querySelectorAll('.dashboard-tab');
@@ -147,8 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    setupTabs('teacher-dashboard-tabs', teacherFormView);
-    setupTabs('student-dashboard-tabs', studentSection);
+    setupTabs('#teacher-dashboard-tabs');
+    setupTabs('#student-dashboard-tabs');
 
     // --- TEACHER SECTION LOGIC ---
     showLoginTab.addEventListener('click', () => {
@@ -232,6 +229,42 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) { /* Handled */ }
     });
+
+    const fetchPendingStudents = async () => {
+        if (!pendingStudentsContainer) return;
+        try {
+            const students = await apiFetch('/students/pending');
+            pendingStudentsContainer.innerHTML = '';
+            if (!students || students.length === 0) {
+                pendingStudentsContainer.innerHTML = '<p>No pending student verifications.</p>';
+                return;
+            }
+            const list = document.createElement('ul');
+            students.forEach(student => {
+                const item = document.createElement('li');
+                item.innerHTML = `<span><strong>${student.name}</strong> (Div: ${student.division}, Roll: ${student.roll_no})</span> <button class="verify-student-btn" data-student-id="${student.id}">Verify</button>`;
+                list.appendChild(item);
+            });
+            pendingStudentsContainer.appendChild(list);
+        } catch (error) { 
+            pendingStudentsContainer.innerHTML = '<p>Could not load pending students.</p>';
+        }
+    };
+    
+    teacherFormView.addEventListener('click', (e) => {
+        if(e.target.classList.contains('dashboard-tab') && e.target.dataset.target === 'pending-student-wrapper') {
+            fetchPendingStudents();
+        }
+        if (e.target.classList.contains('verify-student-btn')) {
+            const studentId = e.target.dataset.studentId;
+            apiFetch(`/students/verify/${studentId}`, { method: 'PUT' }).then(result => {
+                if (result) {
+                    showMessage(result.message);
+                    fetchPendingStudents();
+                }
+            });
+        }
+    });
     
     // --- STUDENT SECTION LOGIC ---
     regStudentDiv.addEventListener('change', () => {
@@ -268,9 +301,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await apiFetch('/students/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
             if(result) {
                 showMessage(result.message);
-                studentSection.querySelector('.auth-container').classList.add('hidden');
                 studentSection.querySelector('.dashboard-tabs').classList.add('hidden');
                 studentSection.querySelector('h2').classList.add('hidden');
+                studentLoginWrapper.classList.add('hidden');
+                studentRegWrapper.classList.add('hidden');
+                studentPublicView.classList.add('hidden');
                 studentDashboardView.classList.remove('hidden');
                 fetchAndDisplayStudentData(result.division, result.roll_no);
             }
@@ -291,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             data.students.forEach(student => {
                 let isHighlighted = student.roll_no == loggedInRollNo && student.division == division;
-                if (!isPublicView && loggedInRollNo && !isHighlighted) return;
+                if (!isPublicView && !isHighlighted) return;
 
                 let totalAbsences = 0;
                 let rowHTML = `<tr class="${isHighlighted ? 'highlighted' : ''}"><td>${student.roll_no}</td><td>${student.name}</td>`;
@@ -307,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const totalFine = totalAbsences * 100;
                 rowHTML += `<td class="fine">₹${totalFine}</td></tr>`;
                 
-                if (!isPublicView || !loggedInRollNo) {
+                if (isPublicView) {
                     tableHTML += rowHTML;
                 } else if (isHighlighted) {
                     tableHTML += rowHTML;
@@ -415,14 +450,13 @@ document.addEventListener('DOMContentLoaded', () => {
             teacherStatusContainer.appendChild(list);
         } catch(error) { /* Handled */ }
     };
+    
     hodLoginBtn.addEventListener('click', async () => {
         const accessCode = hodAccessCodeInput.value;
         try {
             const result = await apiFetch('/auth/hod', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessCode }) });
             if(result) {
-                // THIS IS THE FIX: This is a more direct way to hide the login form.
-                hodLoginView.style.display = 'none'; 
-                
+                hodLoginView.style.display = 'none';
                 hodDataView.classList.remove('hidden');
                 showMessage('HOD Login successful!');
                 fetchPendingTeachers();
@@ -437,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     removeFineForms.forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const data = { date: e.target.querySelector('.fine-date').value, time_slot: e.target.querySelector('.fine-time').value, roll_no: e.target.querySelector('.fine-rollno').value, division: e.target.querySelector('.fine-div').value };
+            const data = { date: form.querySelector('.fine-date').value, time_slot: form.querySelector('.fine-time').value, roll_no: form.querySelector('.fine-rollno').value, division: form.querySelector('.fine-div').value };
             try {
                 const result = await apiFetch('/attendance/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if(result) {

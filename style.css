@@ -44,10 +44,10 @@ button:hover { background-color: var(--primary-hover); }
 .roll-number-item:hover { border-color: var(--primary-color); color: var(--primary-color); }
 .roll-number-item.absent { background-color: var(--accent-color-danger); color: white; border-color: var(--accent-color-danger); transform: scale(1.05); }
 .hod-admin-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color); }
-#pending-teachers-section ul, #teacher-status-section ul { list-style: none; padding: 0; }
-#pending-teachers-section li, #teacher-status-section li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border-color); }
-#pending-teachers-section li:last-child, #teacher-status-section li:last-child { border-bottom: none; }
-.verify-btn { font-size: 0.8rem; padding: 0.3rem 0.7rem; background-color: var(--accent-color-success); color: white; border: none; border-radius: 5px; cursor: pointer;}
+#pending-teachers-section ul, #teacher-status-section ul, #pending-students-container ul { list-style: none; padding: 0; }
+#pending-teachers-section li, #teacher-status-section li, #pending-students-container li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border-color); }
+#pending-teachers-section li:last-child, #teacher-status-section li:last-child, #pending-students-container li:last-child { border-bottom: none; }
+.verify-btn, .verify-student-btn { font-size: 0.8rem; padding: 0.3rem 0.7rem; background-color: var(--accent-color-success); color: white; border: none; border-radius: 5px; cursor: pointer;}
 .status-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; }
 .status-dot.active { background-color: #28a745; }
 .status-dot.inactive { background-color: #ced4da; }

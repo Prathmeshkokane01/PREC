@@ -9,8 +9,6 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SALT_ROUNDS = 10;
-
-// --- PRE-DEFINED ACCESS CODES ---
 const HOD_ACCESS_CODE = 'hod123';
 
 // --- DATABASE CONNECTION ---
@@ -108,20 +106,23 @@ app.get('/api/teachers/status', async (req, res) => {
     }
 });
 
-// --- STUDENT AUTH ---
+// --- STUDENT AUTH (REWRITTEN) ---
 app.post('/api/students/register', async (req, res) => {
     const { name, division, roll_no, phone_no, password } = req.body;
     try {
-        const studentCheck = await pool.query('SELECT * FROM students WHERE division = $1 AND roll_no = $2', [division, roll_no]);
-        if (studentCheck.rows.length === 0) {
-            return res.status(404).json({ message: 'Student profile not found. Please contact your administrator.' });
-        }
-        if (studentCheck.rows[0].phone_no) {
-            return res.status(400).json({ message: 'This student profile has already been registered.' });
+        const studentCheck = await pool.query(
+            'SELECT * FROM students WHERE division = $1 AND roll_no = $2',
+            [division, roll_no]
+        );
+        if (studentCheck.rows.length > 0) {
+            return res.status(400).json({ message: 'A student with this Roll Number is already registered in this division.' });
         }
         const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-        await pool.query('UPDATE students SET phone_no = $1, password_hash = $2, name = $3 WHERE division = $4 AND roll_no = $5', [phone_no, passwordHash, name, division, roll_no]);
-        res.status(201).json({ message: 'Registration successful! You can now log in.' });
+        await pool.query(
+            'INSERT INTO students (name, division, roll_no, phone_no, password_hash, status) VALUES ($1, $2, $3, $4, $5, $6)',
+            [name, division, roll_no, phone_no, passwordHash, 'pending']
+        );
+        res.status(201).json({ message: 'Registration successful! Please wait for a teacher to verify your account.' });
     } catch (error) {
         console.error('Student registration error:', error);
         res.status(500).json({ message: 'An error occurred. The phone number might already be in use.' });
@@ -136,10 +137,17 @@ app.post('/api/students/login', async (req, res) => {
         if (!student || !student.password_hash) {
             return res.status(401).json({ message: 'Invalid phone number or password.' });
         }
+        if (student.status === 'pending') {
+            return res.status(403).json({ message: 'Your registration is still pending verification by a teacher.' });
+        }
         const isMatch = await bcrypt.compare(password, student.password_hash);
         if (isMatch) {
             await pool.query('UPDATE students SET last_login = NOW() WHERE phone_no = $1', [phone_no]);
-            res.status(200).json({ message: 'Login successful!', division: student.division, roll_no: student.roll_no });
+            res.status(200).json({ 
+                message: 'Login successful!',
+                division: student.division,
+                roll_no: student.roll_no
+            });
         } else {
             res.status(401).json({ message: 'Invalid phone number or password.' });
         }
@@ -149,12 +157,33 @@ app.post('/api/students/login', async (req, res) => {
     }
 });
 
+// --- NEW ENDPOINTS FOR TEACHER TO VERIFY STUDENTS ---
+app.get('/api/students/pending', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' ORDER BY id ASC");
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch pending students.' });
+    }
+});
+
+app.put('/api/students/verify/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query("UPDATE students SET status = 'verified' WHERE id = $1", [id]);
+        res.status(200).json({ message: 'Student verified successfully.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to verify student.' });
+    }
+});
+
+
 // --- DATA & ATTENDANCE ---
 app.get('/api/students/:division', async (req, res) => {
     const { division } = req.params;
     const client = await pool.connect();
     try {
-        const studentRes = await client.query('SELECT roll_no, name FROM students WHERE division = $1 ORDER BY roll_no', [division]);
+        const studentRes = await client.query("SELECT roll_no, name, division FROM students WHERE division = $1 AND status = 'verified' ORDER BY roll_no", [division]);
         const students = studentRes.rows;
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
