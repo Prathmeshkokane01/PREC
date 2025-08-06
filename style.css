@@ -28,7 +28,7 @@ button:hover { background-color: var(--primary-hover); }
 .auth-tab { flex-grow: 1; background: none; border: none; padding: 1rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--text-light-color); border-bottom: 3px solid transparent; }
 .auth-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
 #teacher-login-form, #teacher-signup-form, #student-login-form, #student-reg-form { display: flex; flex-direction: column; gap: 1rem; }
-#teacher-login-view button, #hod-login-view button { margin-top: 1rem; }
+#hod-login-view { display: flex; flex-direction: column; gap: 1rem; max-width: 400px; margin: 2rem auto; text-align: center;}
 #teacher-login-form button, #teacher-signup-form button, #student-login-form button, #student-reg-form button { margin-top: 0.5rem; justify-self: center; }
 .password-wrapper { position: relative; display: flex; align-items: center; }
 .password-wrapper input { width: 100%; padding-right: 45px; }

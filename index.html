@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <header>
         <div class="header-container">
             <img src="college_logo.png" alt="Pravara Rural Engineering College Logo" class="college-logo">
@@ -19,11 +20,13 @@
             </div>
         </div>
     </header>
+
     <nav>
         <button id="nav-teacher" class="nav-button active">Teacher Section</button>
         <button id="nav-student" class="nav-button">Student Section</button>
         <button id="nav-hod" class="nav-button">HOD Section</button>
     </nav>
+
     <main>
         <section id="teacher-section">
             <div class="auth-container">
@@ -182,7 +185,10 @@
         <section id="hod-section" class="hidden">
              <div id="hod-login-view">
                 <h2>HOD Login</h2>
-                <input type="password" id="hod-access-code" placeholder="Enter HOD Access Code">
+                <div class="password-wrapper">
+                    <input type="password" id="hod-access-code" placeholder="Enter HOD Access Code">
+                    <span class="toggle-password">👁️</span>
+                </div>
                 <button id="hod-login-btn">Login</button>
             </div>
             <div id="hod-data-view" class="hidden">
