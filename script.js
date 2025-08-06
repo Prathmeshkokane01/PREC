@@ -1,6 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
     const API_BASE_URL = '';
+    // --- TEACHER DASHBOARD TAB LOGIC ---
+const teacherDashboard = document.getElementById('teacher-form-view');
+if (teacherDashboard) {
+    const dashboardTabs = teacherDashboard.querySelectorAll('.dashboard-tab');
+    const dashboardContents = teacherDashboard.querySelectorAll('.dashboard-content');
+
+    teacherDashboard.addEventListener('click', (e) => {
+        // Check if a dashboard tab was clicked
+        if (e.target.classList.contains('dashboard-tab')) {
+            const targetId = e.target.dataset.target;
+
+            // Update tab active state
+            dashboardTabs.forEach(tab => tab.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // Show/hide content
+            dashboardContents.forEach(content => {
+                if (content.id === targetId) {
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            });
+        }
+    });
+}
     
     // --- DOM ELEMENTS ---
     const navButtons = document.querySelectorAll('.nav-button');
