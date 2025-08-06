@@ -1,66 +1,44 @@
-/* --- FINAL STYLESHEET --- */
-
-/* 1. Root Variables & Global Styles */
-:root {
-    --primary-color: #0D47A1;
-    --primary-hover: #0B3A82;
-    --college-red: #B71C1C;
-    --header-bg: #1565C0;
-    --bg-color: #F5F7FA;
-    --surface-color: #FFFFFF;
-    --border-color: #DEE2E6;
-    --text-color: #343A40;
-    --text-light-color: #6c757d;
-    --accent-color-success: #28a745;
-    --accent-color-danger: #dc3545;
-}
+/* --- FINAL STYLESHEET V3 --- */
+:root { --primary-color: #0D47A1; --primary-hover: #0B3A82; --college-red: #B71C1C; --header-bg: #1565C0; --bg-color: #F5F7FA; --surface-color: #FFFFFF; --border-color: #DEE2E6; --text-color: #343A40; --text-light-color: #6c757d; --accent-color-success: #28a745; --accent-color-danger: #dc3545; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; color: var(--text-color); line-height: 1.7; }
-
-/* 2. Header & Logo */
 header { background-color: var(--surface-color); padding: 1rem; border-bottom: 1px solid var(--border-color); width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .header-container { display: flex; align-items: center; justify-content: center; max-width: 1200px; margin: 0 auto; gap: 25px; }
 .college-logo { height: 80px; width: auto; flex-shrink: 0; }
 .header-text { text-align: left; }
 header h1 { font-size: 2.2rem; margin: 0; padding: 0; border: none; line-height: 1.2; color: var(--college-red); font-weight: 700; }
 header p { font-size: 1.1rem; margin: 0.25rem 0 0 0; padding: 0; opacity: 1; color: var(--text-color); }
-
-/* 3. Navigation Bar */
 nav { display: flex; justify-content: center; background-color: #F8F9FA; border-bottom: 1px solid var(--border-color); }
 .nav-button { background: none; border: none; border-bottom: 4px solid transparent; padding: 1rem 1.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; color: var(--text-light-color); margin-top: -1px; }
 .nav-button:hover { color: var(--primary-color); }
 .nav-button.active { border-bottom: 4px solid var(--primary-color); color: var(--primary-color); }
-
-/* 4. Main Content Area & Sections */
 main { padding: 2.5rem 1rem; max-width: 1100px; margin: 0 auto; }
 section { background: var(--surface-color); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border-color); border-top: 5px solid var(--primary-color); box-shadow: 0 10px 30px rgba(0,0,0,0.07); }
 .hidden { display: none; }
 h2 { font-weight: 600; font-size: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
 h3 { font-weight: 600; font-size: 1.3rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; color: var(--primary-color); }
-
-/* 5. Forms & Inputs */
 form { display: grid; gap: 1.5rem; }
 label { font-weight: 600; font-size: 0.95rem; color: var(--text-light-color); }
-input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], select { width: 100%; padding: 0.8rem 1rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; font-family: 'Poppins', sans-serif; transition: border-color 0.3s, box-shadow 0.3s; }
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], input[type="tel"], select { width: 100%; padding: 0.8rem 1rem; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; font-family: 'Poppins', sans-serif; transition: border-color 0.3s, box-shadow 0.3s; }
 input:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.2); }
 button { padding: 0.8rem 2rem; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s ease; justify-self: start; }
 button:hover { background-color: var(--primary-hover); }
-
-/* 6. Teacher Auth Section */
 .auth-container { max-width: 500px; margin: 0 auto; }
 .auth-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
 .auth-tab { flex-grow: 1; background: none; border: none; padding: 1rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--text-light-color); border-bottom: 3px solid transparent; }
 .auth-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-#teacher-login-form, #teacher-signup-form { display: flex; flex-direction: column; gap: 1rem; }
-#teacher-login-form button, #teacher-signup-form button { margin-top: 0.5rem; justify-self: center; }
-
-/* 7. Roll Number Grid */
+#teacher-login-form, #teacher-signup-form, #student-login-form, #student-reg-form { display: flex; flex-direction: column; gap: 1rem; }
+#teacher-login-form button, #teacher-signup-form button, #student-login-form button, #student-reg-form button { margin-top: 0.5rem; justify-self: center; }
+.dashboard-tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem; }
+.dashboard-tab { padding: 0.75rem 1.5rem; border: none; background: none; cursor: pointer; font-weight: 600; font-size: 1rem; color: var(--text-light-color); border-bottom: 3px solid transparent; transition: all 0.3s ease; margin-bottom: -2px; }
+.dashboard-tab:hover { color: var(--primary-color); }
+.dashboard-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+.dashboard-content { animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .roll-number-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 12px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; max-height: 250px; overflow-y: auto; }
 .roll-number-item { height: 45px; width: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid var(--border-color); font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; }
 .roll-number-item:hover { border-color: var(--primary-color); color: var(--primary-color); }
 .roll-number-item.absent { background-color: var(--accent-color-danger); color: white; border-color: var(--accent-color-danger); transform: scale(1.05); }
-
-/* 8. HOD Admin Panel */
 .hod-admin-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color); }
 #pending-teachers-section ul, #teacher-status-section ul { list-style: none; padding: 0; }
 #pending-teachers-section li, #teacher-status-section li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border-color); }
@@ -69,14 +47,12 @@ button:hover { background-color: var(--primary-hover); }
 .status-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; }
 .status-dot.active { background-color: #28a745; }
 .status-dot.inactive { background-color: #ced4da; }
-
-/* 9. Other Sections */
 #fine-section-container { margin-top: 3.5rem; padding-top: 2rem; border-top: 2px dashed var(--border-color); }
+#fine-section-container h3 { border: none; }
+.remove-fine-form { display: grid; gap: 1.5rem; }
 .div-selector, .filters { margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
 #hod-download-pdf { background-color: var(--accent-color-success); margin-left: auto; justify-self: end; }
 #hod-download-pdf:hover { background-color: #218838; }
-
-/* 10. Table Styles */
 table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 0.9rem; }
 th, td { border: 1px solid var(--border-color); padding: 0.9rem 1rem; text-align: left; vertical-align: middle; }
 thead th { background-color: #E9ECEF; font-weight: 600; font-size: 0.95rem; }
@@ -86,13 +62,10 @@ td.present { text-align: center; color: #2E7D32; }
 .fine { font-weight: 700; color: var(--accent-color-danger); font-size: 1rem; }
 .delete-btn { background: var(--accent-color-danger); color: white; padding: 0.4rem 0.8rem; font-size: 0.85rem; border: none; border-radius: 5px; cursor: pointer; }
 .delete-btn:hover { background: #a80000; }
-
-/* 11. Message Popup */
 #message-container { position: fixed; bottom: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 6px; color: white; font-weight: 500; display: none; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 #message-container.success { background-color: var(--accent-color-success); }
 #message-container.error { background-color: var(--accent-color-danger); }
-
-/* 12. Responsiveness */
+.form-note { font-size: 0.9rem; color: var(--text-light-color); text-align: center; margin-top: -1rem; margin-bottom: 1rem; }
 @media (max-width: 768px) {
     header h1 { font-size: 1.4rem; }
     header p { font-size: 0.9rem; }
@@ -103,42 +76,4 @@ td.present { text-align: center; color: #2E7D32; }
     main { padding: 1.5rem 1rem; }
     section { padding: 1.5rem; }
     .hod-admin-panel { grid-template-columns: 1fr; }
-}
-/* --- TEACHER DASHBOARD TAB STYLES --- */
-
-.dashboard-tabs {
-    display: flex;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 2rem;
-}
-
-.dashboard-tab {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--text-light-color);
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-    margin-bottom: -2px; /* Aligns the bottom border with the container's border */
-}
-
-.dashboard-tab:hover {
-    color: var(--primary-color);
-}
-
-.dashboard-tab.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-}
-
-.dashboard-content {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
