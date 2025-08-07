@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await apiFetch('/students/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
             if(result) {
                 showMessage(result.message);
-                document.getElementById('student-public-content').classList.add('hidden');
+                studentPublicContent.classList.add('hidden');
                 studentDashboardView.classList.remove('hidden');
                 fetchAndDisplayStudentData(result.division, result.roll_no);
             }
@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     studentLogoutBtn.addEventListener('click', () => {
         studentDashboardView.classList.add('hidden');
-        document.getElementById('student-public-content').classList.remove('hidden');
+        studentPublicContent.classList.remove('hidden');
         document.getElementById('show-student-login-tab').click();
     });
 
@@ -349,7 +349,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const totalFine = totalAbsences * 100;
                 rowHTML += `<td class="fine">₹${totalFine}</td></tr>`;
-                tableHTML += rowHTML;
+                
+                if (isPublicView) {
+                    tableHTML += rowHTML;
+                } else if (isHighlighted) {
+                    tableHTML += rowHTML;
+                }
             });
             tableHTML += `</tbody></table>`;
             container.innerHTML = tableHTML;

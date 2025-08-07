@@ -154,7 +154,7 @@ app.post('/api/students/login', async (req, res) => {
     }
 });
 
-// --- PENDING STUDENT VERIFICATION (for Teachers) ---
+// --- PENDING STUDENT VERIFICATION ---
 app.get('/api/students/pending', async (req, res) => {
     try {
         const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' ORDER BY id ASC");
@@ -186,7 +186,7 @@ app.get('/api/students/:division', async (req, res) => {
         const students = studentRes.rows;
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-        const attendanceRes = await client.query('SELECT student_roll_no, division, date, status FROM attendance_records WHERE division = $1 AND date >= $2', [division, sevenDaysAgo]);
+        const attendanceRes = await client.query('SELECT student_roll_no, division, date FROM attendance_records WHERE division = $1 AND date >= $2', [division, sevenDaysAgo]);
         const attendanceMap = {};
         attendanceRes.rows.forEach(row => {
             const key = `${row.division}-${row.student_roll_no}`;
