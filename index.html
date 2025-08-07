@@ -25,6 +25,7 @@
         <button id="nav-hod" class="nav-button">HOD Section</button>
     </nav>
     <main>
+        <!-- Teacher Section -->
         <section id="teacher-section">
             <div class="auth-container">
                 <div class="auth-tabs">
@@ -142,6 +143,7 @@
             </div>
         </section>
 
+        <!-- Student Section -->
         <section id="student-section" class="hidden">
             <div id="student-public-content">
                 <h2>Student Portal</h2>
@@ -200,6 +202,7 @@
             </div>
         </section>
 
+        <!-- HOD Section -->
         <section id="hod-section" class="hidden">
              <div id="hod-login-view">
                 <h2>HOD Login</h2>
@@ -211,46 +214,78 @@
             </div>
             <div id="hod-data-view" class="hidden">
                 <h2>HOD Dashboard</h2>
-                <div class="hod-admin-panel">
-                    <div id="pending-teachers-section">
-                        <h3>Pending Teacher Verifications</h3>
-                        <div id="pending-teachers-container"></div>
+                <div class="dashboard-tabs" id="hod-dashboard-tabs">
+                    <button class="dashboard-tab active" data-target="hod-main-dashboard-wrapper">HOD Dashboard</button>
+                    <button class="dashboard-tab" data-target="hod-student-dashboard-wrapper">Student Dashboard</button>
+                </div>
+
+                <div id="hod-main-dashboard-wrapper" class="dashboard-content">
+                    <div class="hod-admin-panel">
+                        <div id="pending-teachers-section">
+                            <h3>Pending Teacher Verifications</h3>
+                            <div id="pending-teachers-container"></div>
+                        </div>
+                        <div id="teacher-status-section">
+                            <h3>Verified Teacher Status</h3>
+                            <div id="teacher-status-container"></div>
+                        </div>
                     </div>
-                    <div id="teacher-status-section">
-                        <h3>Verified Teacher Status</h3>
-                        <div id="teacher-status-container"></div>
+                    <h3>Daily Attendance Records</h3>
+                    <div class="filters">
+                        <label>Filter by Division:</label>
+                        <select id="hod-filter-div"> <option value="ALL">All Divisions</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
+                        <label>Filter by Date:</label>
+                        <input type="date" id="hod-filter-date">
+                        <button id="hod-filter-btn">Apply Filter</button>
+                        <button id="hod-download-pdf">Download as PDF</button>
+                    </div>
+                    <div id="hod-table-container"></div>
+                    <div id="fine-section-container">
+                        <h3>Remove an Absence / Fine</h3>
+                        <form class="remove-fine-form">
+                            <label>Date of Lecture:</label>
+                            <input type="date" class="fine-date" required>
+                            <label>Time Slot of Lecture:</label>
+                            <select class="fine-time" required>
+                                <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
+                                <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
+                                <option value="11.30am to 1.20pm">11:30 AM - 1:20 PM</option>
+                                <option value="2.15pm to 3.10pm">2:15 PM - 3:10 PM</option>
+                                <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
+                                <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
+                            </select>
+                            <label>Student Roll Number to Clear:</label>
+                            <input type="number" class="fine-rollno" required>
+                            <label>Student Division:</label>
+                            <select class="fine-div" required> <option value="A">Div A</option> <option value="B">Div B</option> </select>
+                            <button type="submit">Remove Absence Record</button>
+                        </form>
                     </div>
                 </div>
-                <h3>Daily Attendance Records</h3>
-                <div class="filters">
-                    <label>Filter by Division:</label>
-                    <select id="hod-filter-div"> <option value="ALL">All Divisions</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                    <label>Filter by Date:</label>
-                    <input type="date" id="hod-filter-date">
-                    <button id="hod-filter-btn">Apply Filter</button>
-                    <button id="hod-download-pdf">Download as PDF</button>
-                </div>
-                <div id="hod-table-container"></div>
-                <div id="fine-section-container">
-                    <h3>Remove an Absence / Fine</h3>
-                    <form class="remove-fine-form">
-                        <label>Date of Lecture:</label>
-                        <input type="date" class="fine-date" required>
-                        <label>Time Slot of Lecture:</label>
-                        <select class="fine-time" required>
-                            <option value="9.30am to 10.25am">9:30 AM - 10:25 AM</option>
-                            <option value="10.25am to 11.20am">10:25 AM - 11:20 AM</option>
-                            <option value="11.30am to 1.20pm">11:30 AM - 1:20 PM</option>
-                            <option value="2.15pm to 3.10pm">2:15 PM - 3:10 PM</option>
-                            <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
-                            <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
+
+                <div id="hod-student-dashboard-wrapper" class="dashboard-content hidden">
+                    <h3>Student Attendance Averages</h3>
+                    <div class="filters">
+                        <label>Filter by Division:</label>
+                        <select id="hod-student-filter-div">
+                            <option value="ALL">All Divisions</option>
+                            <option value="A">Div A</option>
+                            <option value="B">Div B</option>
                         </select>
-                        <label>Student Roll Number to Clear:</label>
-                        <input type="number" class="fine-rollno" required>
-                        <label>Student Division:</label>
-                        <select class="fine-div" required> <option value="A">Div A</option> <option value="B">Div B</option> </select>
-                        <button type="submit">Remove Absence Record</button>
-                    </form>
+                        <label>Date Range:</label>
+                        <select id="hod-student-filter-date-range">
+                            <option value="weekly">This Week</option>
+                            <option value="monthly">This Month</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <div id="custom-date-filter" class="hidden">
+                            <input type="date" id="hod-student-start-date">
+                            <span>to</span>
+                            <input type="date" id="hod-student-end-date">
+                        </div>
+                        <button id="hod-student-filter-btn">Generate Report</button>
+                    </div>
+                    <div id="hod-student-table-container"></div>
                 </div>
             </div>
         </section>

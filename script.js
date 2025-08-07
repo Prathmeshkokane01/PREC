@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const studentVerifyLoginForm = document.getElementById('student-verify-login-form');
     const pendingStudentsListView = document.getElementById('pending-students-list-view');
     const pendingListHeading = document.getElementById('pending-list-heading');
+    const pendingStudentsContainer = document.getElementById('pending-students-container');
 
     // Student Section & Auth
     const studentSection = document.getElementById('student-section');
@@ -56,10 +57,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const hodTableContainer = document.getElementById('hod-table-container');
     const pendingTeachersContainer = document.getElementById('pending-teachers-container');
     const teacherStatusContainer = document.getElementById('teacher-status-container');
-    const pendingStudentsContainer = document.getElementById('pending-students-container');
     const removeFineForms = document.querySelectorAll('.remove-fine-form');
     const togglePasswordIcons = document.querySelectorAll('.toggle-password');
     let statusInterval;
+
+    // HOD Student Dashboard elements
+    const hodStudentFilterDiv = document.getElementById('hod-student-filter-div');
+    const hodStudentFilterDateRange = document.getElementById('hod-student-filter-date-range');
+    const customDateFilter = document.getElementById('custom-date-filter');
+    const hodStudentStartDate = document.getElementById('hod-student-start-date');
+    const hodStudentEndDate = document.getElementById('hod-student-end-date');
+    const hodStudentFilterBtn = document.getElementById('hod-student-filter-btn');
+    const hodStudentTableContainer = document.getElementById('hod-student-table-container');
+
 
     // --- INITIALIZATION ---
     if (dateDisplayInput && dateInput) {
@@ -149,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setupTabs('#teacher-dashboard-tabs');
     setupTabs('#student-dashboard-tabs');
+    setupTabs('#hod-dashboard-tabs');
 
     // --- TEACHER SECTION LOGIC ---
     showLoginTab.addEventListener('click', () => {
@@ -274,18 +285,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     teacherFormView.addEventListener('click', (e) => {
         if(e.target.classList.contains('dashboard-tab') && e.target.dataset.target === 'pending-student-wrapper') {
-            // Reset the view to the login form when the tab is clicked
             studentVerifyLoginView.classList.remove('hidden');
             pendingStudentsListView.classList.add('hidden');
             studentVerifyLoginForm.reset();
         }
         if (e.target.classList.contains('verify-student-btn')) {
             const studentId = e.target.dataset.id;
-            const currentDivision = pendingListHeading.textContent.slice(-1); // Get division from heading
+            const currentDivision = pendingListHeading.textContent.slice(-1);
             apiFetch(`/students/verify/${studentId}`, { method: 'PUT' }).then(result => {
                 if (result) {
                     showMessage(result.message);
-                    fetchPendingStudents(currentDivision); // Refresh list for the same division
+                    fetchPendingStudents(currentDivision);
                 }
             });
         }
@@ -497,6 +507,78 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusInterval = setInterval(fetchTeacherStatus, 15000);
             }
         } catch(error) { /* Handled */ }
+    });
+
+    hodStudentFilterDateRange.addEventListener('change', () => {
+        if (hodStudentFilterDateRange.value === 'custom') {
+            customDateFilter.classList.remove('hidden');
+        } else {
+            customDateFilter.classList.add('hidden');
+        }
+    });
+
+    hodStudentFilterBtn.addEventListener('click', async () => {
+        const division = hodStudentFilterDiv.value;
+        const range = hodStudentFilterDateRange.value;
+        let startDate, endDate;
+        const today = new Date();
+        
+        if (range === 'weekly') {
+            endDate = new Date(today);
+            startDate = new Date(today);
+            startDate.setDate(today.getDate() - 6);
+        } else if (range === 'monthly') {
+            endDate = new Date(today);
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        } else {
+            startDate = new Date(hodStudentStartDate.value);
+            endDate = new Date(hodStudentEndDate.value);
+        }
+
+        const startDateStr = startDate.toLocaleDateString('en-CA');
+        const endDateStr = endDate.toLocaleDateString('en-CA');
+
+        hodStudentTableContainer.innerHTML = `<p>Generating report... Please wait.</p>`;
+        
+        try {
+            const reportData = await apiFetch(`/hod/student-dashboard?division=${division}&startDate=${startDateStr}&endDate=${endDateStr}`);
+            if (reportData) {
+                const subjects = ['DS', 'OOPCG', 'ELE DF', 'OS', 'DELD', 'UHV', 'ED', 'DSL', 'CEP'];
+                let tableHTML = `<table><thead><tr><th>Roll No</th><th>Name</th><th>Div</th>`;
+                subjects.forEach(s => tableHTML += `<th>${s} (%)</th>`);
+                tableHTML += `<th>Total Avg (%)</th></tr></thead><tbody>`;
+
+                reportData.forEach(student => {
+                    tableHTML += `<tr>
+                        <td>${student.roll_no}</td>
+                        <td>${student.name}</td>
+                        <td>${student.division}</td>
+                    `;
+                    subjects.forEach(subject => {
+                        const avg = student.subject_avg[subject];
+                        let cellClass = '';
+                        if (avg !== 'N/A' && parseFloat(avg) < 75) {
+                            cellClass = 'low-attendance';
+                        } else if (avg !== 'N/A' && parseFloat(avg) >= 75) {
+                            cellClass = 'high-attendance';
+                        }
+                        tableHTML += `<td class="${cellClass}">${avg}</td>`;
+                    });
+                    let totalAvgClass = '';
+                    if(student.total_avg !== 'N/A' && parseFloat(student.total_avg) < 75) {
+                        totalAvgClass = 'low-attendance';
+                    } else if (student.total_avg !== 'N/A' && parseFloat(student.total_avg) >= 75) {
+                        totalAvgClass = 'high-attendance';
+                    }
+                    tableHTML += `<td class="${totalAvgClass}">${student.total_avg}</td></tr>`;
+                });
+                
+                tableHTML += `</tbody></table>`;
+                hodStudentTableContainer.innerHTML = tableHTML;
+            }
+        } catch (error) {
+            hodStudentTableContainer.innerHTML = `<p>Could not generate report.</p>`;
+        }
     });
 
     // --- FINE REMOVAL LOGIC ---

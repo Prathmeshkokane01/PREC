@@ -75,6 +75,9 @@ td.present { text-align: center; color: #2E7D32; }
 .form-note { font-size: 0.9rem; color: var(--text-light-color); text-align: center; margin-top: -1rem; margin-bottom: 1rem; }
 tr.highlighted { background-color: #FFF9C4 !important; }
 #student-verify-login-view { max-width: 400px; margin: 2rem auto; }
+#custom-date-filter { display: flex; gap: 0.5rem; align-items: center; }
+td.low-attendance { background-color: #FFCDD2; color: #B71C1C; font-weight: bold; }
+td.high-attendance { background-color: #C8E6C9; color: #1B5E20; font-weight: bold; }
 @media (max-width: 768px) {
     header h1 { font-size: 1.4rem; }
     header p { font-size: 0.9rem; }

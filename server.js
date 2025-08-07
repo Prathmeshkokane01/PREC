@@ -9,11 +9,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SALT_ROUNDS = 10;
-
-// --- PRE-DEFINED ACCESS CODES ---
 const HOD_ACCESS_CODE = 'hod123';
-const DIV_A_ACCESS_CODE = 'divA2025'; // New Access Code for Division A
-const DIV_B_ACCESS_CODE = 'divB2025'; // New Access Code for Division B
+const DIV_A_ACCESS_CODE = 'divA2025';
+const DIV_B_ACCESS_CODE = 'divB2025';
 
 // --- DATABASE CONNECTION ---
 const pool = new Pool({
@@ -38,7 +36,6 @@ app.post('/api/auth/hod', (req, res) => {
     }
 });
 
-// NEW: Endpoint to check division-specific access codes for student verification
 app.post('/api/auth/division-access', (req, res) => {
     const { accessCode } = req.body;
     if (accessCode === DIV_A_ACCESS_CODE) {
@@ -49,7 +46,6 @@ app.post('/api/auth/division-access', (req, res) => {
     }
     res.status(401).json({ message: 'Invalid Division Access Code.' });
 });
-
 
 app.post('/api/teachers/signup', async (req, res) => {
     const { name, email, password } = req.body;
@@ -123,7 +119,7 @@ app.get('/api/teachers/status', async (req, res) => {
     }
 });
 
-// --- STUDENT AUTH ---
+// --- STUDENT AUTH & VERIFICATION ---
 app.post('/api/students/register', async (req, res) => {
     const { name, division, roll_no, phone_no, password } = req.body;
     try {
@@ -171,9 +167,7 @@ app.post('/api/students/login', async (req, res) => {
     }
 });
 
-// --- PENDING STUDENT VERIFICATION (for Teachers) ---
 app.get('/api/students/pending', async (req, res) => {
-    // UPDATED: This endpoint now filters by division
     const { division } = req.query;
     if (!division || !['A', 'B'].includes(division)) {
         return res.status(400).json({ message: 'A valid division (A or B) is required.' });
@@ -192,13 +186,11 @@ app.put('/api/students/verify/:id', async (req, res) => {
     try {
         await pool.query("UPDATE students SET status = 'verified' WHERE id = $1", [id]);
         res.status(200).json({ message: 'Student verified successfully.' });
-    } catch (error)
-    {
+    } catch (error) {
         console.error("Error verifying student:", error);
         res.status(500).json({ message: 'Failed to verify student.' });
     }
 });
-
 
 // --- DATA & ATTENDANCE ---
 app.get('/api/students/:division', async (req, res) => {
@@ -246,7 +238,7 @@ app.post('/api/attendance', async (req, res) => {
         const lectureRes = await client.query(lectureInsertQuery, [date, division, subject, topic, teacher_name, time_slot, type, absentRollNosAsInt]);
         const lectureId = lectureRes.rows[0].id;
         for (const roll_no of absentRollNosAsInt) {
-            const absentInsertQuery = `INSERT INTO attendance_records (lecture_id, student_roll_no, division, date, status) VALUES ($1, $2, $3, $4, 'A');`;
+            const absentInsertQuery = `INSERT INTO attendance_records (lecture_id, student_roll_no, division, date) VALUES ($1, $2, $3, $4);`;
             await client.query(absentInsertQuery, [lectureId, roll_no, division, date]);
         }
         await client.query('COMMIT');
@@ -326,6 +318,76 @@ app.delete('/api/lectures/:id', async (req, res) => {
         res.status(500).json({ message: 'Failed to delete lecture record.' });
     }
 });
+
+// --- NEW: HOD STUDENT DASHBOARD API ---
+app.get('/api/hod/student-dashboard', async (req, res) => {
+    const { division, startDate, endDate } = req.query;
+    const subjects = ['DS', 'OOPCG', 'ELE DF', 'OS', 'DELD', 'UHV', 'ED', 'DSL', 'CEP'];
+
+    let studentQuery = "SELECT id, name, division, roll_no FROM students WHERE status = 'verified'";
+    const studentParams = [];
+    if (division && division !== 'ALL') {
+        studentParams.push(division);
+        studentQuery += ` AND division = $${studentParams.length}`;
+    }
+    studentQuery += " ORDER BY division, roll_no";
+
+    try {
+        const studentsRes = await pool.query(studentQuery, studentParams);
+        const students = studentsRes.rows;
+
+        const lecturesRes = await pool.query(
+            "SELECT id, subject, division, absent_roll_nos FROM lectures WHERE date >= $1 AND date <= $2",
+            [startDate, endDate]
+        );
+        const lectures = lecturesRes.rows;
+
+        const report = students.map(student => {
+            const studentReport = {
+                roll_no: student.roll_no,
+                name: student.name,
+                division: student.division,
+                subject_avg: {},
+                total_avg: 0
+            };
+
+            let totalLecturesAttended = 0;
+            let totalLecturesHeld = 0;
+
+            subjects.forEach(subject => {
+                const relevantLectures = lectures.filter(lec => lec.subject === subject && lec.division === student.division);
+                const lecturesHeld = relevantLectures.length;
+                
+                if (lecturesHeld === 0) {
+                    studentReport.subject_avg[subject] = 'N/A';
+                    return;
+                }
+
+                const absences = relevantLectures.filter(lec => lec.absent_roll_nos.includes(student.roll_no)).length;
+                const attended = lecturesHeld - absences;
+                const percentage = (attended / lecturesHeld) * 100;
+                
+                studentReport.subject_avg[subject] = percentage.toFixed(1);
+                totalLecturesAttended += attended;
+                totalLecturesHeld += lecturesHeld;
+            });
+
+            if (totalLecturesHeld > 0) {
+                studentReport.total_avg = ((totalLecturesAttended / totalLecturesHeld) * 100).toFixed(1);
+            } else {
+                studentReport.total_avg = 'N/A';
+            }
+            return studentReport;
+        });
+
+        res.json(report);
+
+    } catch (error) {
+        console.error("Error generating HOD student dashboard:", error);
+        res.status(500).json({ message: 'Failed to generate student dashboard report.' });
+    }
+});
+
 
 // --- START SERVER ---
 app.listen(PORT, () => {
