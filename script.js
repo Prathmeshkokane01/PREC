@@ -321,6 +321,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const headingElement = isPublicView ? studentTableHeadingPublic : studentDashboardHeading;
             
             let headingText = `Displaying Data for Division ${division}`;
+            if (!isPublicView && data.students.length > 0) {
+                const currentUser = data.students.find(s => s.roll_no == loggedInRollNo && s.division == division);
+                if (currentUser) {
+                    headingText = `Attendance Report for ${currentUser.name}`;
+                }
+            }
+            
             let tableHTML = `<table><thead><tr><th>Roll No</th><th>Student Name</th>`;
             data.dates.forEach(date => { tableHTML += `<th>${new Date(date).toLocaleDateString('en-GB')}</th>`; });
             tableHTML += `<th>Total Fine</th></tr></thead><tbody>`;
@@ -342,13 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const totalFine = totalAbsences * 100;
                 rowHTML += `<td class="fine">₹${totalFine}</td></tr>`;
-                
-                if (isPublicView) {
-                    tableHTML += rowHTML;
-                } else if (isHighlighted) {
-                    tableHTML += rowHTML;
-                    headingText = `Attendance Report for ${student.name}`;
-                }
+                tableHTML += rowHTML;
             });
             tableHTML += `</tbody></table>`;
             container.innerHTML = tableHTML;

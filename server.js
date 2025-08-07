@@ -22,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
-// --- API ENDPOINTS ---
+// --- API ENDPOINTS (ROUTES) ---
 
 // --- HOD & TEACHER AUTH & ADMIN ---
 app.post('/api/auth/hod', (req, res) => {
@@ -157,7 +157,7 @@ app.post('/api/students/login', async (req, res) => {
 // --- PENDING STUDENT VERIFICATION (for Teachers) ---
 app.get('/api/students/pending', async (req, res) => {
     try {
-        const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' ORDER BY division, roll_no ASC");
+        const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' ORDER BY id ASC");
         res.json(result.rows);
     } catch (error) {
         console.error("Error fetching pending students:", error);
