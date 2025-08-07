@@ -26,12 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Student Section & Auth
     const studentSection = document.getElementById('student-section');
-    const studentLoginWrapper = document.getElementById('student-login-wrapper');
-    const studentRegWrapper = document.getElementById('student-reg-wrapper');
+    const studentPublicContent = document.getElementById('student-public-content');
     const studentLoginForm = document.getElementById('student-login-form');
     const studentRegForm = document.getElementById('student-reg-form');
     const studentDashboardView = document.getElementById('student-dashboard-view');
-    const studentPublicViewWrapper = document.getElementById('student-db-wrapper');
     const regStudentDiv = document.getElementById('reg-student-div');
     const regStudentRollNo = document.getElementById('reg-student-rollno');
     const studentLogoutBtn = document.getElementById('student-logout-btn');
@@ -302,10 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await apiFetch('/students/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
             if(result) {
                 showMessage(result.message);
-                studentSection.querySelector('.dashboard-tabs').classList.add('hidden');
-                studentSection.querySelector('h2').classList.add('hidden');
-                studentAuthContainer.classList.add('hidden');
-                studentPublicViewWrapper.classList.add('hidden');
+                document.getElementById('student-public-content').classList.add('hidden');
                 studentDashboardView.classList.remove('hidden');
                 fetchAndDisplayStudentData(result.division, result.roll_no);
             }
@@ -313,7 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     studentLogoutBtn.addEventListener('click', () => {
-        window.location.reload();
+        studentDashboardView.classList.add('hidden');
+        document.getElementById('student-public-content').classList.remove('hidden');
+        document.getElementById('show-student-login-tab').click();
     });
 
     const fetchAndDisplayStudentData = async (division, loggedInRollNo = null) => {
@@ -330,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             data.students.forEach(student => {
                 let isHighlighted = student.roll_no == loggedInRollNo && student.division == division;
-                if (!isPublicView && loggedInRollNo && !isHighlighted) return;
+                if (!isPublicView && !isHighlighted) return;
 
                 let totalAbsences = 0;
                 let rowHTML = `<tr class="${isHighlighted ? 'highlighted' : ''}"><td>${student.roll_no}</td><td>${student.name}</td>`;

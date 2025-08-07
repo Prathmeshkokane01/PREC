@@ -22,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
-// --- API ENDPOINTS (ROUTES) ---
+// --- API ENDPOINTS ---
 
 // --- HOD & TEACHER AUTH & ADMIN ---
 app.post('/api/auth/hod', (req, res) => {
@@ -110,10 +110,7 @@ app.get('/api/teachers/status', async (req, res) => {
 app.post('/api/students/register', async (req, res) => {
     const { name, division, roll_no, phone_no, password } = req.body;
     try {
-        const studentCheck = await pool.query(
-            'SELECT * FROM students WHERE division = $1 AND roll_no = $2',
-            [division, roll_no]
-        );
+        const studentCheck = await pool.query('SELECT * FROM students WHERE division = $1 AND roll_no = $2', [division, roll_no]);
         if (studentCheck.rows.length > 0) {
             return res.status(400).json({ message: 'A student with this Roll Number is already registered in this division.' });
         }
@@ -160,7 +157,7 @@ app.post('/api/students/login', async (req, res) => {
 // --- PENDING STUDENT VERIFICATION (for Teachers) ---
 app.get('/api/students/pending', async (req, res) => {
     try {
-        const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' ORDER BY id ASC");
+        const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' ORDER BY division, roll_no ASC");
         res.json(result.rows);
     } catch (error) {
         console.error("Error fetching pending students:", error);
@@ -173,7 +170,8 @@ app.put('/api/students/verify/:id', async (req, res) => {
     try {
         await pool.query("UPDATE students SET status = 'verified' WHERE id = $1", [id]);
         res.status(200).json({ message: 'Student verified successfully.' });
-    } catch (error) {
+    } catch (error)
+    {
         console.error("Error verifying student:", error);
         res.status(500).json({ message: 'Failed to verify student.' });
     }

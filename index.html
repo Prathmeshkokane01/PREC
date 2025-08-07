@@ -120,21 +120,21 @@
                 </div>
                 <div id="pending-student-wrapper" class="dashboard-content hidden">
                     <h3>Pending Student Verifications</h3>
-                    <div id="pending-students-container">
-                        </div>
+                    <div id="pending-students-container"></div>
                 </div>
             </div>
         </section>
 
         <section id="student-section" class="hidden">
-            <h2>Student Portal</h2>
-            <div class="dashboard-tabs" id="student-dashboard-tabs">
-                <button class="dashboard-tab active" data-target="student-login-wrapper">Login</button>
-                <button class="dashboard-tab" data-target="student-reg-wrapper">Registration</button>
-                <button class="dashboard-tab" data-target="student-db-wrapper">Attendance Database</button>
-            </div>
-            <div class="auth-container">
-                <div id="student-login-wrapper" class="dashboard-content">
+            <div id="student-public-content">
+                <h2>Student Portal</h2>
+                <div class="dashboard-tabs" id="student-dashboard-tabs">
+                    <button class="dashboard-tab active" data-target="student-login-wrapper">Login</button>
+                    <button class="dashboard-tab" data-target="student-reg-wrapper">Registration</button>
+                    <button class="dashboard-tab" data-target="student-db-wrapper">Attendance Database</button>
+                </div>
+                
+                <div id="student-login-wrapper" class="dashboard-content auth-container">
                     <h3>Student Login</h3>
                     <form id="student-login-form">
                         <input type="tel" id="student-phone" placeholder="Enter your Phone Number" required>
@@ -146,7 +146,7 @@
                     </form>
                 </div>
                 
-                <div id="student-reg-wrapper" class="dashboard-content hidden">
+                <div id="student-reg-wrapper" class="dashboard-content hidden auth-container">
                     <h3>Student Registration</h3>
                     <p class="form-note">Create your student profile. It will be active after a teacher verifies it.</p>
                     <form id="student-reg-form">
@@ -166,16 +166,16 @@
                         <button type="submit">Create Account</button>
                     </form>
                 </div>
-            </div>
 
-            <div id="student-db-wrapper" class="dashboard-content hidden">
-                <h3>Public Attendance Database</h3>
-                <div class="div-selector">
-                    <button id="view-div-a" data-div="A">View Div A</button>
-                    <button id="view-div-b" data-div="B">View Div B</button>
+                <div id="student-db-wrapper" class="dashboard-content hidden">
+                    <h3>Public Attendance Database</h3>
+                    <div class="div-selector">
+                        <button id="view-div-a" data-div="A">View Div A</button>
+                        <button id="view-div-b" data-div="B">View Div B</button>
+                    </div>
+                    <h3 id="student-table-heading-public"></h3>
+                    <div id="student-table-container-public"></div>
                 </div>
-                <h3 id="student-table-heading-public"></h3>
-                <div id="student-table-container-public"></div>
             </div>
 
             <div id="student-dashboard-view" class="hidden">
