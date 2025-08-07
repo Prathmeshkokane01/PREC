@@ -9,7 +9,11 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SALT_ROUNDS = 10;
+
+// --- PRE-DEFINED ACCESS CODES ---
 const HOD_ACCESS_CODE = 'hod123';
+const DIV_A_ACCESS_CODE = 'divA2025'; // New Access Code for Division A
+const DIV_B_ACCESS_CODE = 'divB2025'; // New Access Code for Division B
 
 // --- DATABASE CONNECTION ---
 const pool = new Pool({
@@ -33,6 +37,19 @@ app.post('/api/auth/hod', (req, res) => {
         res.status(401).json({ message: 'Invalid HOD access code.' });
     }
 });
+
+// NEW: Endpoint to check division-specific access codes for student verification
+app.post('/api/auth/division-access', (req, res) => {
+    const { accessCode } = req.body;
+    if (accessCode === DIV_A_ACCESS_CODE) {
+        return res.status(200).json({ message: 'Access Granted.', division: 'A' });
+    }
+    if (accessCode === DIV_B_ACCESS_CODE) {
+        return res.status(200).json({ message: 'Access Granted.', division: 'B' });
+    }
+    res.status(401).json({ message: 'Invalid Division Access Code.' });
+});
+
 
 app.post('/api/teachers/signup', async (req, res) => {
     const { name, email, password } = req.body;
@@ -92,7 +109,7 @@ app.put('/api/teachers/verify/:id', async (req, res) => {
 app.get('/api/teachers/status', async (req, res) => {
     try {
         const result = await pool.query("SELECT name, last_login FROM teachers WHERE status = 'verified'");
-        const activeThreshold = 5 * 60 * 1000; // 5 minutes
+        const activeThreshold = 5 * 60 * 1000;
         const statuses = result.rows.map(teacher => {
             if (!teacher.last_login) { return { name: teacher.name, isActive: false }; }
             const lastLoginTime = new Date(teacher.last_login).getTime();
@@ -156,8 +173,13 @@ app.post('/api/students/login', async (req, res) => {
 
 // --- PENDING STUDENT VERIFICATION (for Teachers) ---
 app.get('/api/students/pending', async (req, res) => {
+    // UPDATED: This endpoint now filters by division
+    const { division } = req.query;
+    if (!division || !['A', 'B'].includes(division)) {
+        return res.status(400).json({ message: 'A valid division (A or B) is required.' });
+    }
     try {
-        const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' ORDER BY id ASC");
+        const result = await pool.query("SELECT id, name, division, roll_no FROM students WHERE status = 'pending' AND division = $1 ORDER BY id ASC", [division]);
         res.json(result.rows);
     } catch (error) {
         console.error("Error fetching pending students:", error);

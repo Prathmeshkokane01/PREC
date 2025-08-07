@@ -27,9 +27,9 @@ button:hover { background-color: var(--primary-hover); }
 .auth-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
 .auth-tab { flex-grow: 1; background: none; border: none; padding: 1rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--text-light-color); border-bottom: 3px solid transparent; }
 .auth-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-#teacher-login-form, #teacher-signup-form, #student-login-form, #student-reg-form { display: flex; flex-direction: column; gap: 1rem; }
+#teacher-login-form, #teacher-signup-form, #student-login-form, #student-reg-form, #student-verify-login-form { display: flex; flex-direction: column; gap: 1rem; }
 #hod-login-view { display: flex; flex-direction: column; gap: 1rem; max-width: 400px; margin: 2rem auto; text-align: center;}
-#teacher-login-form button, #teacher-signup-form button, #student-login-form button, #student-reg-form button { margin-top: 0.5rem; justify-self: center; }
+#teacher-login-form button, #teacher-signup-form button, #student-login-form button, #student-reg-form button, #student-verify-login-form button { margin-top: 0.5rem; justify-self: center; }
 .password-wrapper { position: relative; display: flex; align-items: center; }
 .password-wrapper input { width: 100%; padding-right: 45px; }
 .toggle-password { position: absolute; right: 15px; cursor: pointer; user-select: none; color: var(--text-light-color); font-style: normal; }
@@ -74,6 +74,7 @@ td.present { text-align: center; color: #2E7D32; }
 #message-container.error { background-color: var(--accent-color-danger); }
 .form-note { font-size: 0.9rem; color: var(--text-light-color); text-align: center; margin-top: -1rem; margin-bottom: 1rem; }
 tr.highlighted { background-color: #FFF9C4 !important; }
+#student-verify-login-view { max-width: 400px; margin: 2rem auto; }
 @media (max-width: 768px) {
     header h1 { font-size: 1.4rem; }
     header p { font-size: 0.9rem; }

@@ -116,8 +116,17 @@
                     </div>
                 </div>
                 <div id="pending-student-wrapper" class="dashboard-content hidden">
-                    <h3>Pending Student Verifications</h3>
-                    <div id="pending-students-container"></div>
+                    <div id="student-verify-login-view">
+                        <h3>Division Access</h3>
+                        <form id="student-verify-login-form">
+                            <input type="password" id="division-access-code" placeholder="Enter Division Access Code" required>
+                            <button type="submit">View Pending Students</button>
+                        </form>
+                    </div>
+                    <div id="pending-students-list-view" class="hidden">
+                        <h3 id="pending-list-heading"></h3>
+                        <div id="pending-students-container"></div>
+                    </div>
                 </div>
             </div>
         </section>

@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeSelect = document.getElementById('att-time');
     const gridContainer = document.getElementById('roll-number-grid');
     const teacherNameInput = document.getElementById('att-teacher');
+    const studentVerifyLoginView = document.getElementById('student-verify-login-view');
+    const studentVerifyLoginForm = document.getElementById('student-verify-login-form');
+    const pendingStudentsListView = document.getElementById('pending-students-list-view');
+    const pendingListHeading = document.getElementById('pending-list-heading');
 
     // Student Section & Auth
     const studentSection = document.getElementById('student-section');
@@ -229,19 +233,37 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) { /* Handled */ }
     });
 
-    const fetchPendingStudents = async () => {
+    studentVerifyLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const accessCode = document.getElementById('division-access-code').value;
+        try {
+            const result = await apiFetch('/auth/division-access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accessCode })
+            });
+            if (result) {
+                studentVerifyLoginView.classList.add('hidden');
+                pendingStudentsListView.classList.remove('hidden');
+                pendingListHeading.textContent = `Pending Students for Division ${result.division}`;
+                fetchPendingStudents(result.division);
+            }
+        } catch (error) { /* Handled */ }
+    });
+
+    const fetchPendingStudents = async (division) => {
         if (!pendingStudentsContainer) return;
         try {
-            const students = await apiFetch('/students/pending');
+            const students = await apiFetch(`/students/pending?division=${division}`);
             pendingStudentsContainer.innerHTML = '';
             if (!students || students.length === 0) {
-                pendingStudentsContainer.innerHTML = '<p>No pending student verifications.</p>';
+                pendingStudentsContainer.innerHTML = `<p>No pending verifications for Division ${division}.</p>`;
                 return;
             }
             const list = document.createElement('ul');
             students.forEach(student => {
                 const item = document.createElement('li');
-                item.innerHTML = `<span><strong>${student.name}</strong> (Div: ${student.division}, Roll: ${student.roll_no})</span> <button class="verify-student-btn" data-id="${student.id}">Verify</button>`;
+                item.innerHTML = `<span><strong>${student.name}</strong> (Roll: ${student.roll_no})</span> <button class="verify-student-btn" data-id="${student.id}">Verify</button>`;
                 list.appendChild(item);
             });
             pendingStudentsContainer.appendChild(list);
@@ -252,14 +274,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     teacherFormView.addEventListener('click', (e) => {
         if(e.target.classList.contains('dashboard-tab') && e.target.dataset.target === 'pending-student-wrapper') {
-            fetchPendingStudents();
+            // Reset the view to the login form when the tab is clicked
+            studentVerifyLoginView.classList.remove('hidden');
+            pendingStudentsListView.classList.add('hidden');
+            studentVerifyLoginForm.reset();
         }
         if (e.target.classList.contains('verify-student-btn')) {
             const studentId = e.target.dataset.id;
+            const currentDivision = pendingListHeading.textContent.slice(-1); // Get division from heading
             apiFetch(`/students/verify/${studentId}`, { method: 'PUT' }).then(result => {
                 if (result) {
                     showMessage(result.message);
-                    fetchPendingStudents();
+                    fetchPendingStudents(currentDivision); // Refresh list for the same division
                 }
             });
         }
