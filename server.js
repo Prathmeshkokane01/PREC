@@ -132,7 +132,7 @@ app.post('/api/students/register', upload.single('student_image'), async (req, r
     try {
         const studentCheck = await pool.query('SELECT * FROM students WHERE division = $1 AND roll_no = $2', [division, roll_no]);
         if (studentCheck.rows.length > 0) {
-            fs.unlinkSync(tempPath); // Clean up temp file
+            fs.unlinkSync(tempPath);
             return res.status(400).json({ message: 'A student with this Roll Number is already registered.' });
         }
         
@@ -231,29 +231,191 @@ app.post('/api/students/login', async (req, res) => {
 
 // --- DATA & ATTENDANCE ---
 app.get('/api/students/:division', async (req, res) => {
-    // ... (This function remains the same as your original)
+    const { division } = req.params;
+    const client = await pool.connect();
+    try {
+        const studentRes = await client.query("SELECT roll_no, name, division FROM students WHERE division = $1 AND status = 'verified' ORDER BY roll_no", [division]);
+        const students = studentRes.rows;
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        const attendanceRes = await client.query('SELECT student_roll_no, division, date FROM attendance_records WHERE division = $1 AND date >= $2', [division, sevenDaysAgo]);
+        const attendanceMap = {};
+        attendanceRes.rows.forEach(row => {
+            const key = `${row.division}-${row.student_roll_no}`;
+            if (!attendanceMap[key]) { attendanceMap[key] = {}; }
+            attendanceMap[key][new Date(row.date).toISOString().split('T')[0]] = { status: 'A' };
+        });
+        students.forEach(student => {
+            const key = `${student.division}-${student.roll_no}`;
+            student.attendance = attendanceMap[key] || {};
+        });
+        const dates = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+        }
+        dates.reverse();
+        res.json({ students, dates });
+    } catch (error) {
+        console.error('Error fetching student data:', error);
+        res.status(500).json({ message: 'Failed to fetch student data.' });
+    } finally {
+        client.release();
+    }
 });
 
 app.post('/api/attendance/upload', 
     upload.fields([{ name: 'attendance_video', maxCount: 1 }, { name: 'attendance_photos', maxCount: 6 }]), 
     async (req, res) => {
-    // ... (This function remains the same as your original)
+    const { date, division, subject, topic, teacher_name, time_slot, type } = req.body;
+    let filePaths = [], uploadType = '';
+    if (req.files['attendance_video']) {
+        uploadType = 'video';
+        filePaths.push(req.files['attendance_video'][0].path);
+    } else if (req.files['attendance_photos']) {
+        uploadType = 'photos';
+        req.files['attendance_photos'].forEach(file => filePaths.push(file.path));
+    } else {
+        return res.status(400).json({ message: 'No video or photos uploaded.' });
+    }
+    const pythonProcess = spawn('python', ['ai_processor.py', 'attendance', uploadType, division, ...filePaths]);
+    let recognizedRollNos = [], errorOutput = '';
+    pythonProcess.stdout.on('data', data => {
+        try { recognizedRollNos = JSON.parse(data.toString()); } catch(e) { errorOutput += data.toString(); }
+    });
+    pythonProcess.stderr.on('data', data => errorOutput += data.toString());
+    pythonProcess.on('close', async (code) => {
+        filePaths.forEach(path => fs.unlink(path, err => { if (err) console.error("Failed to delete temp file:", path); }));
+        if (code !== 0 || !Array.isArray(recognizedRollNos)) {
+            console.error(`Python script error: ${errorOutput}`);
+            return res.status(500).json({ message: 'AI processing failed.' });
+        }
+        const client = await pool.connect();
+        try {
+            const studentRes = await client.query("SELECT roll_no FROM students WHERE division = $1 AND status = 'verified'", [division]);
+            const allRollNos = studentRes.rows.map(s => s.roll_no);
+            const absentRollNos = allRollNos.filter(roll_no => !recognizedRollNos.includes(roll_no));
+            await client.query('BEGIN');
+            const lectureRes = await client.query(`INSERT INTO lectures (date, division, subject, topic, teacher_name, time_slot, type, absent_roll_nos) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;`, [date, division, subject, topic, teacher_name, time_slot, type, absentRollNos]);
+            const lectureId = lectureRes.rows[0].id;
+            for (const roll_no of absentRollNos) {
+                await client.query(`INSERT INTO attendance_records (lecture_id, student_roll_no, division, date) VALUES ($1, $2, $3, $4);`, [lectureId, roll_no, division, date]);
+            }
+            await client.query('COMMIT');
+            res.status(201).json({ message: `Attendance submitted! Present: ${recognizedRollNos.length}, Absent: ${absentRollNos.length}` });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error submitting AI attendance:', error);
+            res.status(500).json({ message: 'Failed to save attendance after AI processing.' });
+        } finally {
+            client.release();
+        }
+    });
 });
 
 app.get('/api/attendance', async (req, res) => {
-    // ... (This function remains the same as your original)
+    let { division, date } = req.query;
+    let query = 'SELECT * FROM lectures';
+    const params = [];
+    if (division && division !== 'ALL' || date) {
+        query += ' WHERE ';
+        let conditions = [];
+        if (division && division !== 'ALL') {
+            params.push(division);
+            conditions.push(`division = $${params.length}`);
+        }
+        if (date) {
+            params.push(date);
+            conditions.push(`date = $${params.length}`);
+        }
+        query += conditions.join(' AND ');
+    }
+    query += ' ORDER BY date DESC, time_slot ASC';
+    try {
+        const { rows } = await pool.query(query, params);
+        res.json(rows);
+    } catch (error) {
+        console.error('Error fetching HOD data:', error);
+        res.status(500).json({ message: 'Failed to fetch attendance records.' });
+    }
 });
 
 app.post('/api/attendance/remove', async (req, res) => {
-    // ... (This function remains the same as your original)
+    const { date, time_slot, roll_no, division } = req.body;
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const lectureRes = await client.query('SELECT id FROM lectures WHERE date = $1 AND time_slot = $2 AND division = $3', [date, time_slot, division]);
+        if (lectureRes.rows.length === 0) return res.status(404).json({ message: 'No lecture found for that specific criteria.' });
+        const lectureId = lectureRes.rows[0].id;
+        const studentRollNoInt = parseInt(roll_no, 10);
+        const deleteRes = await client.query('DELETE FROM attendance_records WHERE lecture_id = $1 AND student_roll_no = $2 AND division = $3', [lectureId, studentRollNoInt, division]);
+        await client.query(`UPDATE lectures SET absent_roll_nos = array_remove(absent_roll_nos, $1) WHERE id = $2`, [studentRollNoInt, lectureId]);
+        if (deleteRes.rowCount > 0) {
+            await client.query('COMMIT');
+            res.json({ message: `Absence for Roll No ${studentRollNoInt} in Div ${division} on ${date} has been removed.` });
+        } else {
+            await client.query('ROLLBACK');
+            res.status(404).json({ message: 'Student was not marked absent for this lecture.' });
+        }
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error removing absence:', error);
+        res.status(500).json({ message: 'Failed to remove absence record.' });
+    } finally {
+        client.release();
+    }
 });
 
 app.delete('/api/lectures/:id', async (req, res) => {
-    // ... (This function remains the same as your original)
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM lectures WHERE id = $1', [id]);
+        res.status(200).json({ message: 'Lecture record and all associated absences have been deleted.' });
+    } catch (error) {
+        console.error('Error deleting lecture:', error);
+        res.status(500).json({ message: 'Failed to delete lecture record.' });
+    }
 });
 
 app.get('/api/hod/student-dashboard', async (req, res) => {
-    // ... (This function remains the same as your original)
+    const { division, startDate, endDate } = req.query;
+    const subjects = ['DS', 'OOPCG', 'ELE DF', 'OS', 'DELD', 'UHV', 'ED', 'DSL', 'CEP'];
+    let studentQuery = "SELECT id, name, division, roll_no FROM students WHERE status = 'verified'";
+    const studentParams = [];
+    if (division && division !== 'ALL') {
+        studentParams.push(division);
+        studentQuery += ` AND division = $${studentParams.length}`;
+    }
+    studentQuery += " ORDER BY division, roll_no";
+    try {
+        const studentsRes = await pool.query(studentQuery, studentParams);
+        const students = studentsRes.rows;
+        const lecturesRes = await pool.query("SELECT id, subject, division, absent_roll_nos FROM lectures WHERE date >= $1 AND date <= $2", [startDate, endDate]);
+        const lectures = lecturesRes.rows;
+        const report = students.map(student => {
+            const studentReport = { roll_no: student.roll_no, name: student.name, division: student.division, subject_avg: {}, total_avg: 0 };
+            let totalLecturesAttended = 0, totalLecturesHeld = 0;
+            subjects.forEach(subject => {
+                const relevantLectures = lectures.filter(lec => lec.subject === subject && lec.division === student.division);
+                const lecturesHeld = relevantLectures.length;
+                if (lecturesHeld === 0) return studentReport.subject_avg[subject] = 'N/A';
+                const absences = relevantLectures.filter(lec => lec.absent_roll_nos.includes(student.roll_no)).length;
+                const attended = lecturesHeld - absences;
+                const percentage = (attended / lecturesHeld) * 100;
+                studentReport.subject_avg[subject] = percentage.toFixed(1);
+                totalLecturesAttended += attended;
+                totalLecturesHeld += lecturesHeld;
+            });
+            studentReport.total_avg = (totalLecturesHeld > 0) ? ((totalLecturesAttended / totalLecturesHeld) * 100).toFixed(1) : 'N/A';
+            return studentReport;
+        });
+        res.json(report);
+    } catch (error) {
+        console.error("Error generating HOD student dashboard:", error);
+        res.status(500).json({ message: 'Failed to generate student dashboard report.' });
+    }
 });
 
 // --- START SERVER ---
