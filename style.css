@@ -89,3 +89,102 @@ td.high-attendance { background-color: #C8E6C9; color: #1B5E20; font-weight: bol
     section { padding: 1.5rem; }
     .hod-admin-panel { grid-template-columns: 1fr; }
 }
+/* --- Add these styles to the end of your style.css file --- */
+
+.upload-options {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 1rem;
+}
+
+.upload-options input[type="radio"] {
+    display: none; /* Hide the default radio button */
+}
+
+.upload-options label {
+    cursor: pointer;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.upload-options input[type="radio"]:checked + label {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+input[type="file"] {
+    border: 1px dashed var(--border-color);
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+/* --- Add these styles to the end of your style.css file --- */
+
+.upload-options {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 1rem;
+}
+
+.upload-options input[type="radio"] {
+    display: none;
+}
+
+.upload-options label {
+    cursor: pointer;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.upload-options input[type="radio"]:checked + label {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+input[type="file"] {
+    border: 1px dashed var(--border-color);
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+/* Styles for Pending Student Verification */
+.pending-student-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.pending-student-photo {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--border-color);
+}
+
+.pending-student-details {
+    flex-grow: 1;
+}
+
+.pending-student-actions button {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    margin-left: 0.5rem;
+}
+
+.reject-btn {
+    background-color: var(--accent-color-danger);
+}

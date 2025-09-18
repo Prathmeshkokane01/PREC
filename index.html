@@ -25,12 +25,11 @@
         <button id="nav-hod" class="nav-button">HOD Section</button>
     </nav>
     <main>
-        <!-- Teacher Section -->
         <section id="teacher-section">
             <div class="auth-container">
                 <div class="auth-tabs">
-                    <button id="show-login-tab" class="auth-tab active">Login</button>
-                    <button id="show-signup-tab" class="auth-tab">Sign Up</button>
+                    <button id="show-login-tab" class="auth-tab active" data-target="teacher-login-view">Login</button>
+                    <button id="show-signup-tab" class="auth-tab" data-target="teacher-signup-view">Sign Up</button>
                 </div>
                 <div id="teacher-login-view">
                     <h2>Teacher Login</h2>
@@ -60,8 +59,8 @@
                 <h2>Teacher Dashboard</h2>
                 <div class="dashboard-tabs" id="teacher-dashboard-tabs">
                     <button class="dashboard-tab active" data-target="submit-attendance-wrapper">Submit Attendance</button>
-                    <button class="dashboard-tab" data-target="remove-fine-wrapper">Remove Fine</button>
                     <button class="dashboard-tab" data-target="pending-student-wrapper">Pending Student Verification</button>
+                    <button class="dashboard-tab" data-target="remove-fine-wrapper">Remove Fine</button>
                 </div>
                 <div id="submit-attendance-wrapper" class="dashboard-content">
                     <h3>Submit Daily Attendance</h3>
@@ -99,8 +98,21 @@
                             <option value="3.10pm to 4.05pm">3:10 PM - 4:05 PM</option>
                             <option value="4.05pm to 5.00pm">4:05 PM - 5:00 PM</option>
                         </select>
-                        <label>Absent Roll Numbers (Click circles to select):</label>
-                        <div id="roll-number-grid" class="roll-number-grid-container"></div>
+                        <label>Select Attendance Method:</label>
+                        <div class="upload-options">
+                            <input type="radio" id="method-video" name="upload_method" value="video" checked>
+                            <label for="method-video">Upload 15-20s Video</label>
+                            <input type="radio" id="method-photos" name="upload_method" value="photos">
+                            <label for="method-photos">Upload 5-6 Photos</label>
+                        </div>
+                        <div id="video-upload-wrapper">
+                            <label for="att-video">Upload Classroom Video:</label>
+                            <input type="file" id="att-video" name="attendance_video" accept="video/*">
+                        </div>
+                        <div id="photos-upload-wrapper" class="hidden">
+                            <label for="att-photos">Upload Classroom Photos:</label>
+                            <input type="file" id="att-photos" name="attendance_photos" accept="image/*" multiple>
+                        </div>
                         <button type="submit">Submit Attendance</button>
                     </form>
                 </div>
@@ -143,7 +155,6 @@
             </div>
         </section>
 
-        <!-- Student Section -->
         <section id="student-section" class="hidden">
             <div id="student-public-content">
                 <h2>Student Portal</h2>
@@ -165,19 +176,27 @@
                 </div>
                 <div id="student-reg-wrapper" class="dashboard-content hidden auth-container">
                     <h3>Student Registration</h3>
-                    <p class="form-note">Create your student profile. It will be active after a teacher verifies it.</p>
+                    <p class="form-note">Your account will be active after a teacher verifies your details and photo.</p>
                     <form id="student-reg-form">
                         <label>Full Name:</label>
-                        <input type="text" id="reg-student-name" placeholder="Enter your name exactly as per records" required>
+                        <input type="text" id="reg-student-name" name="name" placeholder="Enter your name exactly as per records" required>
                         <label>Division:</label>
-                        <select id="reg-student-div" required> <option value="">-- Select Division --</option> <option value="A">Div A</option> <option value="B">Div B</option> </select>
+                        <select id="reg-student-div" name="division" required>
+                            <option value="">-- Select Division --</option>
+                            <option value="A">Div A</option>
+                            <option value="B">Div B</option>
+                        </select>
                         <label>Roll Number:</label>
-                        <select id="reg-student-rollno" required disabled> <option value="">-- Select Division First --</option> </select>
+                        <select id="reg-student-rollno" name="roll_no" required disabled>
+                            <option value="">-- Select Division First --</option>
+                        </select>
+                        <label>Upload a Clear Photo of Your Face:</label>
+                        <input type="file" id="reg-student-image" name="student_image" accept="image/*" required>
                         <label>Phone Number:</label>
-                        <input type="tel" id="reg-student-phone" placeholder="Enter 10-digit mobile number" required>
+                        <input type="tel" id="reg-student-phone" name="phone_no" placeholder="Enter 10-digit mobile number" required>
                         <label>Create a Password:</label>
                         <div class="password-wrapper">
-                            <input type="password" id="reg-student-password" placeholder="Create a strong password" required>
+                            <input type="password" id="reg-student-password" name="password" placeholder="Create a strong password" required>
                             <span class="toggle-password">👁️</span>
                         </div>
                         <button type="submit">Create Account</button>
@@ -202,7 +221,6 @@
             </div>
         </section>
 
-        <!-- HOD Section -->
         <section id="hod-section" class="hidden">
              <div id="hod-login-view">
                 <h2>HOD Login</h2>
@@ -218,7 +236,6 @@
                     <button class="dashboard-tab active" data-target="hod-main-dashboard-wrapper">HOD Dashboard</button>
                     <button class="dashboard-tab" data-target="hod-student-dashboard-wrapper">Student Dashboard</button>
                 </div>
-
                 <div id="hod-main-dashboard-wrapper" class="dashboard-content">
                     <div class="hod-admin-panel">
                         <div id="pending-teachers-section">
@@ -262,7 +279,6 @@
                         </form>
                     </div>
                 </div>
-
                 <div id="hod-student-dashboard-wrapper" class="dashboard-content hidden">
                     <h3>Student Attendance Averages</h3>
                     <div class="filters">

@@ -21,16 +21,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateDisplayInput = document.getElementById('att-date-display');
     const typeSelect = document.getElementById('att-type');
     const timeSelect = document.getElementById('att-time');
-    const gridContainer = document.getElementById('roll-number-grid');
     const teacherNameInput = document.getElementById('att-teacher');
     const studentVerifyLoginView = document.getElementById('student-verify-login-view');
     const studentVerifyLoginForm = document.getElementById('student-verify-login-form');
     const pendingStudentsListView = document.getElementById('pending-students-list-view');
     const pendingListHeading = document.getElementById('pending-list-heading');
     const pendingStudentsContainer = document.getElementById('pending-students-container');
+    const videoUploadWrapper = document.getElementById('video-upload-wrapper');
+    const photosUploadWrapper = document.getElementById('photos-upload-wrapper');
+    const videoInputField = document.getElementById('att-video');
+    const photosInputField = document.getElementById('att-photos');
 
     // Student Section & Auth
-    const studentSection = document.getElementById('student-section');
     const studentPublicContent = document.getElementById('student-public-content');
     const studentLoginForm = document.getElementById('student-login-form');
     const studentRegForm = document.getElementById('student-reg-form');
@@ -70,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const hodStudentFilterBtn = document.getElementById('hod-student-filter-btn');
     const hodStudentTableContainer = document.getElementById('hod-student-table-container');
 
-
     // --- INITIALIZATION ---
     if (dateDisplayInput && dateInput) {
         const today = new Date();
@@ -108,10 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- NAVIGATION LOGIC ---
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
-            if (e.target.id !== 'nav-student') {
-                if (studentTableContainerPublic) studentTableContainerPublic.innerHTML = '';
-                if (studentTableHeadingPublic) studentTableHeadingPublic.textContent = '';
-            }
             navButtons.forEach(btn => btn.classList.remove('active'));
             sections.forEach(sec => sec.classList.add('hidden'));
             e.target.classList.add('active');
@@ -138,21 +135,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupTabs(containerSelector) {
         const container = document.querySelector(containerSelector);
         if (!container) return;
-        
-        const tabs = container.querySelectorAll('.dashboard-tab');
-        const contents = container.parentElement.querySelectorAll('.dashboard-content');
-        
+        const tabs = container.querySelectorAll('.dashboard-tab, .auth-tab');
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const targetId = e.currentTarget.dataset.target;
                 tabs.forEach(t => t.classList.remove('active'));
                 e.currentTarget.classList.add('active');
+                const contents = container.parentElement.querySelectorAll('.dashboard-content, .auth-container > div[id$="-view"]');
                 contents.forEach(content => {
-                    if (content.id === targetId) {
-                        content.classList.remove('hidden');
-                    } else {
-                        content.classList.add('hidden');
-                    }
+                    if (content.id === targetId) content.classList.remove('hidden');
+                    else content.classList.add('hidden');
                 });
             });
         });
@@ -160,22 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTabs('#teacher-dashboard-tabs');
     setupTabs('#student-dashboard-tabs');
     setupTabs('#hod-dashboard-tabs');
+    setupTabs('#teacher-section .auth-tabs');
 
     // --- TEACHER SECTION LOGIC ---
-    showLoginTab.addEventListener('click', () => {
-        teacherSignupView.classList.add('hidden');
-        teacherLoginView.classList.remove('hidden');
-        showSignupTab.classList.remove('active');
-        showLoginTab.classList.add('active');
-    });
-
-    showSignupTab.addEventListener('click', () => {
-        teacherLoginView.classList.add('hidden');
-        teacherSignupView.classList.remove('hidden');
-        showLoginTab.classList.remove('active');
-        showSignupTab.classList.add('active');
-    });
-
     teacherSignupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = { name: document.getElementById('signup-name').value, email: document.getElementById('signup-email').value, password: document.getElementById('signup-password').value };
@@ -195,29 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 teacherFormView.classList.remove('hidden');
                 showMessage('Login successful!');
                 teacherNameInput.value = result.teacher_name;
-                generateRollNumberGrid();
             }
         } catch (error) { /* Handled */ }
     });
     
-    function generateRollNumberGrid(totalRollNumbers = 71) {
-        if (!gridContainer) return;
-        gridContainer.innerHTML = '';
-        for (let i = 1; i <= totalRollNumbers; i++) {
-            const rollItem = document.createElement('div');
-            rollItem.classList.add('roll-number-item');
-            rollItem.textContent = i;
-            rollItem.dataset.rollNo = i;
-            gridContainer.appendChild(rollItem);
-        }
-    }
-
-    if (gridContainer) {
-        gridContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('roll-number-item')) { e.target.classList.toggle('absent'); }
-        });
-    }
-
     if(typeSelect){
         typeSelect.addEventListener('change', () => {
             if (typeSelect.value === 'Practical') {
@@ -227,32 +187,65 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    document.querySelectorAll('input[name="upload_method"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'video') {
+                videoUploadWrapper.classList.remove('hidden');
+                photosUploadWrapper.classList.add('hidden');
+                if (photosInputField) photosInputField.value = '';
+            } else {
+                videoUploadWrapper.classList.add('hidden');
+                photosUploadWrapper.classList.remove('hidden');
+                if (videoInputField) videoInputField.value = '';
+            }
+        });
+    });
+    
     attendanceForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(attendanceForm);
-        const data = Object.fromEntries(formData.entries());
-        const absentRollNos = [];
-        const selectedItems = document.querySelectorAll('#roll-number-grid .roll-number-item.absent');
-        selectedItems.forEach(item => { absentRollNos.push(item.dataset.rollNo); });
-        data.absent_roll_nos = absentRollNos;
+        const formData = new FormData();
+        const uploadMethod = document.querySelector('input[name="upload_method"]:checked').value;
+        if (uploadMethod === 'video') {
+            const videoFile = videoInputField.files[0];
+            if (!videoFile) return showMessage('Please select a video file.', 'error');
+            formData.append('attendance_video', videoFile);
+        } else {
+            const photoFiles = photosInputField.files;
+            if (photoFiles.length === 0) return showMessage('Please select at least one photo.', 'error');
+            for (let i = 0; i < photoFiles.length; i++) {
+                formData.append('attendance_photos', photoFiles[i]);
+            }
+        }
+        formData.append('date', document.getElementById('att-date').value);
+        formData.append('division', document.getElementById('att-div').value);
+        formData.append('subject', document.getElementById('att-subject').value);
+        formData.append('topic', document.getElementById('att-topic').value);
+        formData.append('teacher_name', document.getElementById('att-teacher').value);
+        formData.append('type', document.getElementById('att-type').value);
+        formData.append('time_slot', document.getElementById('att-time').value);
+        showMessage('Uploading and processing... Please wait.', 'success');
         try {
-            const result = await apiFetch('/attendance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            const response = await fetch(`${API_BASE_URL}/api/attendance/upload`, { method: 'POST', body: formData });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'An error occurred.');
+            }
+            const result = await response.json();
             if(result){
                 showMessage(result.message);
-                selectedItems.forEach(item => item.classList.remove('absent'));
+                attendanceForm.reset();
+                document.getElementById('method-video').checked = true;
+                videoUploadWrapper.classList.remove('hidden');
+                photosUploadWrapper.classList.add('hidden');
             }
-        } catch (error) { /* Handled */ }
+        } catch (error) { showMessage(error.message, 'error'); }
     });
 
     studentVerifyLoginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const accessCode = document.getElementById('division-access-code').value;
         try {
-            const result = await apiFetch('/auth/division-access', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accessCode })
-            });
+            const result = await apiFetch('/auth/division-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessCode }) });
             if (result) {
                 studentVerifyLoginView.classList.add('hidden');
                 pendingStudentsListView.classList.remove('hidden');
@@ -263,41 +256,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const fetchPendingStudents = async (division) => {
-        if (!pendingStudentsContainer) return;
         try {
             const students = await apiFetch(`/students/pending?division=${division}`);
             pendingStudentsContainer.innerHTML = '';
-            if (!students || students.length === 0) {
+            if (students.length === 0) {
                 pendingStudentsContainer.innerHTML = `<p>No pending verifications for Division ${division}.</p>`;
                 return;
             }
-            const list = document.createElement('ul');
             students.forEach(student => {
-                const item = document.createElement('li');
-                item.innerHTML = `<span><strong>${student.name}</strong> (Roll: ${student.roll_no})</span> <button class="verify-student-btn" data-id="${student.id}">Verify</button>`;
-                list.appendChild(item);
+                const card = document.createElement('div');
+                card.className = 'pending-student-card';
+                card.innerHTML = `
+                    <img src="/${student.photo_path}" alt="Photo of ${student.name}" class="pending-student-photo">
+                    <div class="pending-student-details">
+                        <strong>${student.name}</strong><br>
+                        Roll No: ${student.roll_no} | Division: ${student.division}
+                    </div>
+                    <div class="pending-student-actions">
+                        <button class="verify-btn" data-id="${student.id}">Verify</button>
+                        <button class="reject-btn" data-id="${student.id}">Reject</button>
+                    </div>
+                `;
+                pendingStudentsContainer.appendChild(card);
             });
-            pendingStudentsContainer.appendChild(list);
         } catch (error) { 
             pendingStudentsContainer.innerHTML = '<p>Could not load pending students.</p>';
         }
     };
     
-    teacherFormView.addEventListener('click', (e) => {
-        if(e.target.classList.contains('dashboard-tab') && e.target.dataset.target === 'pending-student-wrapper') {
-            studentVerifyLoginView.classList.remove('hidden');
-            pendingStudentsListView.classList.add('hidden');
-            studentVerifyLoginForm.reset();
-        }
-        if (e.target.classList.contains('verify-student-btn')) {
+    pendingStudentsContainer.addEventListener('click', async (e) => {
+        if (e.target.matches('.verify-btn, .reject-btn')) {
             const studentId = e.target.dataset.id;
-            const currentDivision = pendingListHeading.textContent.slice(-1);
-            apiFetch(`/students/verify/${studentId}`, { method: 'PUT' }).then(result => {
+            const action = e.target.classList.contains('verify-btn') ? 'verify' : 'reject';
+            const division = pendingListHeading.textContent.slice(-1);
+            try {
+                const result = await apiFetch(`/students/${action}/${studentId}`, { method: 'PUT' });
                 if (result) {
                     showMessage(result.message);
-                    fetchPendingStudents(currentDivision);
+                    fetchPendingStudents(division);
                 }
-            });
+            } catch (error) {}
         }
     });
     
@@ -322,11 +320,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     studentRegForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const data = { name: document.getElementById('reg-student-name').value, division: document.getElementById('reg-student-div').value, roll_no: document.getElementById('reg-student-rollno').value, phone_no: document.getElementById('reg-student-phone').value, password: document.getElementById('reg-student-password').value };
+        const formData = new FormData(studentRegForm);
         try {
-            const result = await apiFetch('/students/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-            if(result) { showMessage(result.message); studentRegForm.reset(); document.getElementById('show-student-login-tab').click(); }
-        } catch (error) { /* Handled */ }
+            const response = await fetch(`${API_BASE_URL}/api/students/register`, { method: 'POST', body: formData });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
+            showMessage(result.message);
+            studentRegForm.reset();
+            document.querySelector('#student-dashboard-tabs .dashboard-tab[data-target="student-login-wrapper"]').click();
+        } catch (error) {
+            showMessage(error.message, 'error');
+        }
     });
 
     studentLoginForm.addEventListener('submit', async (e) => {
@@ -346,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     studentLogoutBtn.addEventListener('click', () => {
         studentDashboardView.classList.add('hidden');
         studentPublicContent.classList.remove('hidden');
-        document.getElementById('show-student-login-tab').click();
+        document.querySelector('#student-dashboard-tabs .dashboard-tab[data-target="student-login-wrapper"]').click();
     });
 
     const fetchAndDisplayStudentData = async (division, loggedInRollNo = null) => {
@@ -355,23 +359,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const isPublicView = !loggedInRollNo;
             const container = isPublicView ? studentTableContainerPublic : studentTableContainerLoggedIn;
             const headingElement = isPublicView ? studentTableHeadingPublic : studentDashboardHeading;
-            
             let headingText = `Displaying Data for Division ${division}`;
             if (!isPublicView && data.students.length > 0) {
                 const currentUser = data.students.find(s => s.roll_no == loggedInRollNo && s.division == division);
-                if (currentUser) {
-                    headingText = `Attendance Report for ${currentUser.name}`;
-                }
+                if (currentUser) { headingText = `Attendance Report for ${currentUser.name}`; }
             }
-            
             let tableHTML = `<table><thead><tr><th>Roll No</th><th>Student Name</th>`;
             data.dates.forEach(date => { tableHTML += `<th>${new Date(date).toLocaleDateString('en-GB')}</th>`; });
             tableHTML += `<th>Total Fine</th></tr></thead><tbody>`;
-            
             data.students.forEach(student => {
                 let isHighlighted = student.roll_no == loggedInRollNo && student.division == division;
                 if (!isPublicView && !isHighlighted) return;
-
                 let totalAbsences = 0;
                 let rowHTML = `<tr class="${isHighlighted ? 'highlighted' : ''}"><td>${student.roll_no}</td><td>${student.name}</td>`;
                 data.dates.forEach(date => {
@@ -385,12 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const totalFine = totalAbsences * 100;
                 rowHTML += `<td class="fine">₹${totalFine}</td></tr>`;
-                
-                if (isPublicView) {
-                    tableHTML += rowHTML;
-                } else if (isHighlighted) {
-                    tableHTML += rowHTML;
-                }
+                if (isPublicView) tableHTML += rowHTML;
+                else if (isHighlighted) tableHTML += rowHTML;
             });
             tableHTML += `</tbody></table>`;
             container.innerHTML = tableHTML;
@@ -503,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showMessage('HOD Login successful!');
                 fetchPendingTeachers();
                 fetchAndDisplayHodData();
+                fetchTeacherStatus();
                 if(statusInterval) clearInterval(statusInterval);
                 statusInterval = setInterval(fetchTeacherStatus, 15000);
             }
@@ -522,7 +517,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const range = hodStudentFilterDateRange.value;
         let startDate, endDate;
         const today = new Date();
-        
         if (range === 'weekly') {
             endDate = new Date(today);
             startDate = new Date(today);
@@ -534,12 +528,9 @@ document.addEventListener('DOMContentLoaded', () => {
             startDate = new Date(hodStudentStartDate.value);
             endDate = new Date(hodStudentEndDate.value);
         }
-
         const startDateStr = startDate.toLocaleDateString('en-CA');
         const endDateStr = endDate.toLocaleDateString('en-CA');
-
         hodStudentTableContainer.innerHTML = `<p>Generating report... Please wait.</p>`;
-        
         try {
             const reportData = await apiFetch(`/hod/student-dashboard?division=${division}&startDate=${startDateStr}&endDate=${endDateStr}`);
             if (reportData) {
@@ -547,32 +538,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 let tableHTML = `<table><thead><tr><th>Roll No</th><th>Name</th><th>Div</th>`;
                 subjects.forEach(s => tableHTML += `<th>${s} (%)</th>`);
                 tableHTML += `<th>Total Avg (%)</th></tr></thead><tbody>`;
-
                 reportData.forEach(student => {
-                    tableHTML += `<tr>
-                        <td>${student.roll_no}</td>
-                        <td>${student.name}</td>
-                        <td>${student.division}</td>
-                    `;
+                    tableHTML += `<tr><td>${student.roll_no}</td><td>${student.name}</td><td>${student.division}</td>`;
                     subjects.forEach(subject => {
                         const avg = student.subject_avg[subject];
                         let cellClass = '';
-                        if (avg !== 'N/A' && parseFloat(avg) < 75) {
-                            cellClass = 'low-attendance';
-                        } else if (avg !== 'N/A' && parseFloat(avg) >= 75) {
-                            cellClass = 'high-attendance';
-                        }
+                        if (avg !== 'N/A' && parseFloat(avg) < 75) cellClass = 'low-attendance';
+                        else if (avg !== 'N/A' && parseFloat(avg) >= 75) cellClass = 'high-attendance';
                         tableHTML += `<td class="${cellClass}">${avg}</td>`;
                     });
                     let totalAvgClass = '';
-                    if(student.total_avg !== 'N/A' && parseFloat(student.total_avg) < 75) {
-                        totalAvgClass = 'low-attendance';
-                    } else if (student.total_avg !== 'N/A' && parseFloat(student.total_avg) >= 75) {
-                        totalAvgClass = 'high-attendance';
-                    }
+                    if(student.total_avg !== 'N/A' && parseFloat(student.total_avg) < 75) totalAvgClass = 'low-attendance';
+                    else if (student.total_avg !== 'N/A' && parseFloat(student.total_avg) >= 75) totalAvgClass = 'high-attendance';
                     tableHTML += `<td class="${totalAvgClass}">${student.total_avg}</td></tr>`;
                 });
-                
                 tableHTML += `</tbody></table>`;
                 hodStudentTableContainer.innerHTML = tableHTML;
             }
@@ -581,7 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- FINE REMOVAL LOGIC ---
     removeFineForms.forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
