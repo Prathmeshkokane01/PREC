@@ -127,7 +127,7 @@ app.post('/api/students/register', upload.single('student_image'), async (req, r
     if (!req.file) return res.status(400).json({ message: 'A photo is required for registration.' });
     
     const tempPath = req.file.path;
-    const finalPendingPath = path.join('pending_images', req.file.filename);
+    const finalPendingPath = path.join('pending_images', req.file.filename).replace(/\\/g, "/");
 
     try {
         const studentCheck = await pool.query('SELECT * FROM students WHERE division = $1 AND roll_no = $2', [division, roll_no]);
@@ -176,11 +176,14 @@ app.put('/api/students/verify/:id', async (req, res) => {
         const finalPhotoDir = path.join('student_images', student.division);
         if (!fs.existsSync(finalPhotoDir)) fs.mkdirSync(finalPhotoDir, { recursive: true });
         
-        const finalPhotoPath = path.join(finalPhotoDir, `${student.roll_no}${path.extname(pendingPhotoPath)}`);
+        const finalPhotoName = `${student.roll_no}${path.extname(pendingPhotoPath)}`;
+        const finalPhotoPath = path.join(finalPhotoDir, finalPhotoName);
         
         fs.renameSync(pendingPhotoPath, finalPhotoPath);
         
-        await client.query("UPDATE students SET status = 'verified', photo_path = $1 WHERE id = $2", [finalPhotoPath, id]);
+        const webFriendlyPath = finalPhotoPath.replace(/\\/g, "/");
+        
+        await client.query("UPDATE students SET status = 'verified', photo_path = $1 WHERE id = $2", [webFriendlyPath, id]);
         await client.query('COMMIT');
         res.status(200).json({ message: 'Student verified successfully.' });
     } catch (error) {
@@ -219,7 +222,12 @@ app.post('/api/students/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, student.password_hash);
         if (isMatch) {
             await pool.query('UPDATE students SET last_login = NOW() WHERE phone_no = $1', [phone_no]);
-            res.status(200).json({ message: 'Login successful!', division: student.division, roll_no: student.roll_no });
+            res.status(200).json({ 
+                message: 'Login successful!', 
+                division: student.division, 
+                roll_no: student.roll_no,
+                photo_path: student.photo_path 
+            });
         } else {
             res.status(401).json({ message: 'Invalid phone number or password.' });
         }
@@ -234,21 +242,9 @@ app.get('/api/students/:division', async (req, res) => {
     const { division } = req.params;
     const client = await pool.connect();
     try {
-        const studentRes = await client.query("SELECT roll_no, name, division FROM students WHERE division = $1 AND status = 'verified' ORDER BY roll_no", [division]);
+        const studentRes = await client.query("SELECT roll_no, name, division, photo_path FROM students WHERE division = $1 AND status = 'verified' ORDER BY roll_no", [division]);
         const students = studentRes.rows;
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-        const attendanceRes = await client.query('SELECT student_roll_no, division, date FROM attendance_records WHERE division = $1 AND date >= $2', [division, sevenDaysAgo]);
-        const attendanceMap = {};
-        attendanceRes.rows.forEach(row => {
-            const key = `${row.division}-${row.student_roll_no}`;
-            if (!attendanceMap[key]) { attendanceMap[key] = {}; }
-            attendanceMap[key][new Date(row.date).toISOString().split('T')[0]] = { status: 'A' };
-        });
-        students.forEach(student => {
-            const key = `${student.division}-${student.roll_no}`;
-            student.attendance = attendanceMap[key] || {};
-        });
+
         const dates = [];
         for (let i = 0; i < 7; i++) {
             const d = new Date();
@@ -256,6 +252,36 @@ app.get('/api/students/:division', async (req, res) => {
             dates.push(d.toISOString().split('T')[0]);
         }
         dates.reverse();
+        const sevenDaysAgo = dates[0];
+        const today = dates[6];
+
+        const attendanceRes = await client.query('SELECT student_roll_no, date FROM attendance_records WHERE division = $1 AND date >= $2 AND date <= $3', [division, sevenDaysAgo, today]);
+        const lectureDatesRes = await client.query("SELECT DISTINCT date FROM lectures WHERE division = $1 AND date >= $2 AND date <= $3", [division, sevenDaysAgo, today]);
+        
+        const lectureDates = new Set(lectureDatesRes.rows.map(row => new Date(row.date).toISOString().split('T')[0]));
+        const absenceMap = {};
+        attendanceRes.rows.forEach(row => {
+            const dateStr = new Date(row.date).toISOString().split('T')[0];
+            if (!absenceMap[row.student_roll_no]) {
+                absenceMap[row.student_roll_no] = new Set();
+            }
+            absenceMap[row.student_roll_no].add(dateStr);
+        });
+
+        students.forEach(student => {
+            student.attendance = {};
+            const studentAbsences = absenceMap[student.roll_no] || new Set();
+            dates.forEach(dateStr => {
+                if (studentAbsences.has(dateStr)) {
+                    student.attendance[dateStr] = 'A';
+                } else if (lectureDates.has(dateStr)) {
+                    student.attendance[dateStr] = 'P';
+                } else {
+                    student.attendance[dateStr] = 'N/A';
+                }
+            });
+        });
+
         res.json({ students, dates });
     } catch (error) {
         console.error('Error fetching student data:', error);
@@ -382,7 +408,7 @@ app.delete('/api/lectures/:id', async (req, res) => {
 app.get('/api/hod/student-dashboard', async (req, res) => {
     const { division, startDate, endDate } = req.query;
     const subjects = ['DS', 'OOPCG', 'ELE DF', 'OS', 'DELD', 'UHV', 'ED', 'DSL', 'CEP'];
-    let studentQuery = "SELECT id, name, division, roll_no FROM students WHERE status = 'verified'";
+    let studentQuery = "SELECT id, name, division, roll_no, photo_path FROM students WHERE status = 'verified'";
     const studentParams = [];
     if (division && division !== 'ALL') {
         studentParams.push(division);
@@ -395,7 +421,14 @@ app.get('/api/hod/student-dashboard', async (req, res) => {
         const lecturesRes = await pool.query("SELECT id, subject, division, absent_roll_nos FROM lectures WHERE date >= $1 AND date <= $2", [startDate, endDate]);
         const lectures = lecturesRes.rows;
         const report = students.map(student => {
-            const studentReport = { roll_no: student.roll_no, name: student.name, division: student.division, subject_avg: {}, total_avg: 0 };
+            const studentReport = {
+                roll_no: student.roll_no,
+                name: student.name,
+                division: student.division,
+                photo_path: student.photo_path,
+                subject_avg: {},
+                total_avg: 0
+            };
             let totalLecturesAttended = 0, totalLecturesHeld = 0;
             subjects.forEach(subject => {
                 const relevantLectures = lectures.filter(lec => lec.subject === subject && lec.division === student.division);

@@ -188,3 +188,25 @@ input[type="file"] {
 .reject-btn {
     background-color: var(--accent-color-danger);
 }
+/* --- Add these styles to the end of your style.css file --- */
+
+.dashboard-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-pic-header {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--primary-color);
+}
+
+.profile-pic-table {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+}
