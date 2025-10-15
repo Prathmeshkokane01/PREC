@@ -532,3 +532,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+/* PASTE THIS CODE INTO YOUR script.js FILE */
+
+// --- TEACHER SECTION LOGIC (AROUND LINE 155) ---
+
+// Find these two lines near the top of the Teacher Section Logic
+const videoInputField = document.getElementById('att-video');
+const photosInputField = document.getElementById('att-photos');
+
+// Then, replace the existing radio button event listener with this one.
+document.querySelectorAll('input[name="upload_method"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        if (e.target.value === 'video') {
+            // Show the video uploader
+            videoUploadWrapper.classList.remove('hidden');
+            videoInputField.disabled = false; // <-- FIX: Enable the video input
+
+            // Hide the photos uploader
+            photosUploadWrapper.classList.add('hidden');
+            photosInputField.disabled = true;  // <-- FIX: Disable the photo input
+        } else {
+            // Hide the video uploader
+            videoUploadWrapper.classList.add('hidden');
+            videoInputField.disabled = true;   // <-- FIX: Disable the video input
+
+            // Show the photos uploader
+            photosUploadWrapper.classList.remove('hidden');
+            photosInputField.disabled = false; // <-- FIX: Enable the photo input
+        }
+    });
+});
