@@ -305,7 +305,10 @@ app.post('/api/attendance/upload',
     } else {
         return res.status(400).json({ message: 'No video or photos uploaded.' });
     }
-    const pythonProcess = spawn('python', ['ai_processor.py', 'attendance', uploadType, division, ...filePaths]);
+
+    // THIS IS THE ONLY LINE THAT HAS BEEN CHANGED
+    const pythonProcess = spawn('python3', ['ai_processor.py', 'attendance', uploadType, division, ...filePaths]);
+
     let recognizedRollNos = [], errorOutput = '';
     pythonProcess.stdout.on('data', data => {
         try { recognizedRollNos = JSON.parse(data.toString()); } catch(e) { errorOutput += data.toString(); }
