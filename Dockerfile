@@ -5,14 +5,12 @@ FROM python:3.9
 WORKDIR /app
 
 # Install Node.js v18 and essential build tools
-# --- THIS IS THE KEY CHANGE ---
-# We are now also installing python3-dlib, which is pre-compiled and much faster.
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt-get update && apt-get install -y nodejs cmake build-essential python3-dlib
+RUN apt-get update && apt-get install -y nodejs cmake build-essential
 
 # Copy Python requirements file first, to leverage Docker cache
 COPY requirements.txt .
-# Install Python packages. Pip will see that dlib is already installed and skip the slow build.
+# Install Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Node.js package files
