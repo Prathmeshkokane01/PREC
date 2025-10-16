@@ -1,18 +1,17 @@
-# Start from a base image that already has Python, dlib, and face_recognition installed
-FROM ageitgey/face_recognition:latest
+# Start with a Python 3.9 image, which includes build tools
+FROM python:3.9
 
-# Set the working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# The base image uses Python 3.6, but we can install Node.js v18
-# This also updates the system and installs build tools for Node.js
-RUN apt-get update && \
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs build-essential
+# Install Node.js v18 and essential build tools
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get update && apt-get install -y nodejs cmake build-essential
 
-# Copy your Python requirements. face_recognition and dlib will be skipped as they are in the base image.
+# Copy Python requirements file first, to leverage Docker cache
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Install Python packages
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Node.js package files
 COPY package*.json ./
