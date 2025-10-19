@@ -5,24 +5,18 @@ import cv2
 import face_recognition
 import numpy as np
 
-# --- Optimization Function ---
 def process_frame(frame):
-    # Resize frame for faster and less memory-intensive processing
     try:
-        # Resize to a fixed width to be consistent, maintaining aspect ratio
         h, w, _ = frame.shape
         new_w = 640
         ratio = new_w / w
         new_h = int(h * ratio)
         small_frame = cv2.resize(frame, (new_w, new_h))
-        # Convert from BGR (OpenCV) to RGB (face_recognition)
         rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
         return rgb_small_frame
     except Exception:
-        # If frame is invalid, return None
         return None
 
-# --- Load Known Faces ---
 def load_known_faces(division):
     known_face_encodings = []
     known_face_roll_numbers = []
@@ -43,7 +37,6 @@ def load_known_faces(division):
                 print(f"Skipping {filename}: {e}", file=sys.stderr)
     return known_face_encodings, known_face_roll_numbers
 
-# --- Process Media for Attendance ---
 def process_media(upload_type, file_paths, known_faces, known_roll_nos):
     if not known_faces: return []
     recognized_roll_numbers = set()
@@ -85,7 +78,6 @@ def process_media(upload_type, file_paths, known_faces, known_roll_nos):
             
     return list(recognized_roll_numbers)
 
-# --- Main Execution Block ---
 if __name__ == "__main__":
     try:
         task = sys.argv[1]
