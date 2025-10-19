@@ -7,16 +7,23 @@ import numpy as np
 
 # --- Optimization Function ---
 def process_frame(frame):
-    # Resize frame to 1/4 size for faster and less memory-intensive processing
-    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-    # Convert from BGR (OpenCV) to RGB (face_recognition)
-    rgb_small_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # Use original frame for color conversion
-    return cv2.resize(rgb_small_frame, (0, 0), fx=0.25, fy=0.25) # Resize after color conversion
-
+    # Resize frame for faster and less memory-intensive processing
+    try:
+        # Resize to a fixed width to be consistent, maintaining aspect ratio
+        h, w, _ = frame.shape
+        new_w = 640
+        ratio = new_w / w
+        new_h = int(h * ratio)
+        small_frame = cv2.resize(frame, (new_w, new_h))
+        # Convert from BGR (OpenCV) to RGB (face_recognition)
+        rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+        return rgb_small_frame
+    except Exception:
+        # If frame is invalid, return None
+        return None
 
 # --- Load Known Faces ---
 def load_known_faces(division):
-    # ... (This function remains the same as before)
     known_face_encodings = []
     known_face_roll_numbers = []
     directory = os.path.join('student_images', division)
@@ -51,27 +58,30 @@ def process_media(upload_type, file_paths, known_faces, known_roll_nos):
             
             if frame_count % 5 == 0:
                 rgb_small_frame = process_frame(frame)
-                face_locations = face_recognition.face_locations(rgb_small_frame)
-                face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-                for face_encoding in face_encodings:
-                    matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.6)
-                    if True in matches:
-                        first_match_index = matches.index(True)
-                        recognized_roll_numbers.add(known_roll_nos[first_match_index])
+                if rgb_small_frame is not None:
+                    face_locations = face_recognition.face_locations(rgb_small_frame)
+                    face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+                    for face_encoding in face_encodings:
+                        matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.6)
+                        if True in matches:
+                            first_match_index = matches.index(True)
+                            recognized_roll_numbers.add(known_roll_nos[first_match_index])
             frame_count += 1
         video_capture.release()
 
     elif upload_type == 'photos':
         for image_path in file_paths:
             img = cv2.imread(image_path)
-            rgb_small_frame = process_frame(img)
-            face_locations = face_recognition.face_locations(rgb_small_frame)
-            face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-            for face_encoding in face_encodings:
-                matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.6)
-                if True in matches:
-                    first_match_index = matches.index(True)
-                    recognized_roll_numbers.add(known_roll_nos[first_match_index])
+            if img is not None:
+                rgb_small_frame = process_frame(img)
+                if rgb_small_frame is not None:
+                    face_locations = face_recognition.face_locations(rgb_small_frame)
+                    face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+                    for face_encoding in face_encodings:
+                        matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.6)
+                        if True in matches:
+                            first_match_index = matches.index(True)
+                            recognized_roll_numbers.add(known_roll_nos[first_match_index])
             
     return list(recognized_roll_numbers)
 
