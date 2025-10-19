@@ -10,11 +10,17 @@ RUN apt-get update && \
     apt-get install -y nodejs cmake build-essential libgl1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files first to leverage Docker's layer cache
+# Copy dependency files
 COPY requirements.txt .
 COPY package*.json ./
 
-# Install Python and Node.js dependencies
+# --- THIS IS THE KEY CHANGE ---
+# Install dlib separately first. Pip will prioritize finding a pre-compiled wheel,
+# which is much faster and uses less memory than compiling from source.
+RUN pip install --no-cache-dir dlib
+
+# Now, install the rest of the Python and Node.js dependencies.
+# Pip will see that dlib is already installed and will skip it.
 RUN pip install --no-cache-dir -r requirements.txt
 RUN npm install
 
