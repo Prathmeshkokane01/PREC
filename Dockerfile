@@ -5,8 +5,9 @@ FROM python:3.9
 WORKDIR /app
 
 # Install Node.js v18 and essential build tools
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt-get update && apt-get install -y nodejs cmake build-essential
+# --- THIS IS THE KEY CHANGE ---
+# Added 'libgl1-mesa-glx' which is required by the opencv-python library.
+RUN apt-get update && apt-get install -y nodejs cmake build-essential libgl1-mesa-glx
 
 # Copy Python requirements file first, to leverage Docker cache
 COPY requirements.txt .
