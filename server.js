@@ -455,6 +455,7 @@ app.get('/api/hod/student-dashboard', async (req, res) => {
 });
 
 // --- START SERVER ---
+console.log("DATABASE_URL:", process.env.DATABASE_URL); // This is the new line for debugging
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
