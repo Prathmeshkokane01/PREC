@@ -1,29 +1,28 @@
-# Start with a Python 3.9 image, which includes build tools
+# Start with the official Python 3.9 image
 FROM python:3.9
 
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /app
 
-# Install Node.js v18 and essential build tools
-# --- THIS IS THE KEY CHANGE ---
-# Using the correct package name 'libgl1' required by opencv-python.
-RUN apt-get update && apt-get install -y nodejs cmake build-essential libgl1
+# Install all system dependencies in a single step, including Node.js 18
+RUN apt-get update && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs cmake build-essential libgl1 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy Python requirements file first, to leverage Docker cache
+# Copy dependency files first to leverage Docker's layer cache
 COPY requirements.txt .
-# Install Python packages
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy Node.js package files
 COPY package*.json ./
-# Install Node.js packages
+
+# Install Python and Node.js dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 RUN npm install
 
-# Copy the rest of your application's source code
+# Copy the rest of the application source code
 COPY . .
 
-# Expose the port your app runs on
+# Expose the application port
 EXPOSE 3000
 
-# The command to start your server
+# Command to start the server
 CMD [ "node", "server.js" ]
