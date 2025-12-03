@@ -5,89 +5,82 @@ import cv2
 import face_recognition
 import numpy as np
 
-def process_frame(frame):
-    try:
-        h, w, _ = frame.shape
-        new_w = 640
-        ratio = new_w / w
-        new_h = int(h * ratio)
-        small_frame = cv2.resize(frame, (new_w, new_h))
-        rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-        return rgb_small_frame
-    except Exception:
-        return None
-
 def load_known_faces(division):
-    known_face_encodings = []
-    known_face_roll_numbers = []
+    known_encodings = []
+    known_rolls = []
     directory = os.path.join('student_images', division)
-    if not os.path.exists(directory):
-        return known_face_encodings, known_face_roll_numbers
-    for filename in os.listdir(directory):
-        if filename.endswith(('.png', '.jpg', '.jpeg')):
-            try:
-                roll_number = int(os.path.splitext(filename)[0])
-                image_path = os.path.join(directory, filename)
-                image = face_recognition.load_image_file(image_path)
-                encodings = face_recognition.face_encodings(image)
-                if encodings:
-                    known_face_encodings.append(encodings[0])
-                    known_face_roll_numbers.append(roll_number)
-            except (ValueError, IndexError) as e:
-                print(f"Skipping {filename}: {e}", file=sys.stderr)
-    return known_face_encodings, known_face_roll_numbers
-
-def process_media(upload_type, file_paths, known_faces, known_roll_nos):
-    if not known_faces: return []
-    recognized_roll_numbers = set()
     
-    if upload_type == 'video':
-        video_path = file_paths[0]
-        video_capture = cv2.VideoCapture(video_path)
-        frame_count = 0
-        while video_capture.isOpened():
-            ret, frame = video_capture.read()
-            if not ret: break
-            
-            if frame_count % 5 == 0:
-                rgb_small_frame = process_frame(frame)
-                if rgb_small_frame is not None:
-                    face_locations = face_recognition.face_locations(rgb_small_frame)
-                    face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-                    for face_encoding in face_encodings:
-                        matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.6)
-                        if True in matches:
-                            first_match_index = matches.index(True)
-                            recognized_roll_numbers.add(known_roll_nos[first_match_index])
-            frame_count += 1
-        video_capture.release()
+    if not os.path.exists(directory):
+        return [], []
 
-    elif upload_type == 'photos':
-        for image_path in file_paths:
-            img = cv2.imread(image_path)
-            if img is not None:
-                rgb_small_frame = process_frame(img)
-                if rgb_small_frame is not None:
-                    face_locations = face_recognition.face_locations(rgb_small_frame)
-                    face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-                    for face_encoding in face_encodings:
-                        matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.6)
+    for filename in os.listdir(directory):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            try:
+                # Assuming filename is 'roll_no.jpg'
+                roll = int(os.path.splitext(filename)[0])
+                path = os.path.join(directory, filename)
+                img = face_recognition.load_image_file(path)
+                encs = face_recognition.face_encodings(img)
+                if encs:
+                    known_encodings.append(encs[0])
+                    known_rolls.append(roll)
+            except Exception:
+                continue
+    return known_encodings, known_rolls
+
+def process(upload_type, file_paths, known_encs, known_rolls):
+    found_rolls = set()
+    
+    for file_path in file_paths:
+        if upload_type == 'video':
+            cap = cv2.VideoCapture(file_path)
+            frame_count = 0
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret: break
+                # Process every 10th frame to save speed
+                if frame_count % 10 == 0:
+                    small = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+                    rgb = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
+                    locs = face_recognition.face_locations(rgb)
+                    encs = face_recognition.face_encodings(rgb, locs)
+                    
+                    for encoding in encs:
+                        matches = face_recognition.compare_faces(known_encs, encoding, tolerance=0.6)
                         if True in matches:
-                            first_match_index = matches.index(True)
-                            recognized_roll_numbers.add(known_roll_nos[first_match_index])
-            
-    return list(recognized_roll_numbers)
+                            idx = matches.index(True)
+                            found_rolls.add(known_rolls[idx])
+                frame_count += 1
+            cap.release()
+        else:
+            # Photo mode
+            img = cv2.imread(file_path)
+            if img is None: continue
+            rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            locs = face_recognition.face_locations(rgb)
+            encs = face_recognition.face_encodings(rgb, locs)
+            for encoding in encs:
+                matches = face_recognition.compare_faces(known_encs, encoding, tolerance=0.6)
+                if True in matches:
+                    idx = matches.index(True)
+                    found_rolls.add(known_rolls[idx])
+
+    return list(found_rolls)
 
 if __name__ == "__main__":
-    try:
-        task = sys.argv[1]
-        if task == 'attendance':
-            upload_type_arg = sys.argv[2]
-            division_arg = sys.argv[3]
-            file_paths_args = sys.argv[4:]
-            known_encodings, known_rolls = load_known_faces(division_arg)
-            result = process_media(upload_type_arg, file_paths_args, known_encodings, known_rolls)
-            print(json.dumps(result))
-    except Exception as e:
-        print(f"An error occurred in the Python script: {e}", file=sys.stderr)
-        sys.exit(1)
+    # Args: script.py task upload_type division file1 file2 ...
+    if len(sys.argv) < 5:
+        print(json.dumps([]))
+        sys.exit(0)
+
+    upload_type = sys.argv[2]
+    division = sys.argv[3]
+    files = sys.argv[4:]
+
+    known_encs, known_rolls = load_known_faces(division)
+    
+    if not known_encs:
+        print(json.dumps([]))
+    else:
+        results = process(upload_type, files, known_encs, known_rolls)
+        print(json.dumps(results))
